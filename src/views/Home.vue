@@ -1,47 +1,51 @@
 <template>
   <div class="home">
     <div class="header">
-      <h1>密码与记事管理</h1>
+      <h1>工具管理</h1>
       <div class="user-info">
         <span>{{ user?.email }}</span>
-        <button class="btn-logout" @click="logout">退出登录</button>
       </div>
     </div>
     
-    <div class="dashboard">
-      <div class="stats">
-        <div class="stat-card">
-          <h3>密码数量</h3>
-          <p>{{ passwordCount }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>记事数量</h3>
-          <p>{{ noteCount }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>账号类型</h3>
-          <p>{{ userRole }}</p>
+    <div class="tool-management">
+      <!-- 添加工具部分 -->
+      <div class="add-tool-section">
+        <h2>添加工具</h2>
+        <div class="available-tools">
+          <div 
+            v-for="tool in availableTools" 
+            :key="tool.id"
+            class="tool-card available"
+            @click="addTool(tool)"
+          >
+            <div class="tool-icon">{{ tool.icon }}</div>
+            <h3>{{ tool.name }}</h3>
+            <p>{{ tool.description }}</p>
+            <button class="btn-add">添加</button>
+          </div>
         </div>
       </div>
       
-      <div class="quick-actions">
-        <h2>快速操作</h2>
-        <div class="action-grid">
-          <router-link to="/passwords" class="action-card">
-            <div class="action-icon password-icon">🔐</div>
-            <h3>密码管理</h3>
-            <p>管理和分类您的密码</p>
-          </router-link>
-          <router-link to="/notes" class="action-card">
-            <div class="action-icon note-icon">📝</div>
-            <h3>记事管理</h3>
-            <p>创建和管理个人记事</p>
-          </router-link>
-          <router-link to="/profile" class="action-card">
-            <div class="action-icon profile-icon">👤</div>
-            <h3>个人中心</h3>
-            <p>查看和编辑个人信息</p>
-          </router-link>
+      <!-- 已添加工具部分 -->
+      <div class="added-tools-section">
+        <h2>已添加工具</h2>
+        <div v-if="userTools.length === 0" class="empty-state">
+          <p>还没有添加任何工具，点击上方的工具卡片来添加</p>
+        </div>
+        <div v-else class="added-tools">
+          <div 
+            v-for="tool in userTools" 
+            :key="tool.id"
+            class="tool-card added"
+          >
+            <div class="tool-icon">{{ tool.icon }}</div>
+            <h3>{{ tool.name }}</h3>
+            <p>{{ tool.description }}</p>
+            <div class="tool-actions">
+              <router-link :to="tool.route" class="btn-use">使用</router-link>
+              <button class="btn-remove" @click="removeTool(tool.id)">移除</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -56,35 +60,66 @@ export default {
   data() {
     return {
       user: null,
-      passwordCount: 0,
-      noteCount: 0,
-      userRole: '普通用户'
+      userTools: [],
+      availableTools: [
+        {
+          id: 1,
+          name: '密码管理',
+          route: '/passwords',
+          icon: '🔐',
+          description: '管理和分类您的密码'
+        },
+        {
+          id: 2,
+          name: '记事管理',
+          route: '/notes',
+          icon: '📝',
+          description: '创建和管理个人记事'
+        }
+      ]
     }
   },
   mounted() {
     this.loadUser()
-    this.loadStats()
+    this.loadUserTools()
   },
   methods: {
     async loadUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         this.user = user
-        this.userRole = user.user_metadata?.role === 'vip' ? '会员用户' : '普通用户'
       } else {
         // 未登录，跳转到登录页
         this.$router.push('/login')
       }
     },
-    async loadStats() {
-      // 这里可以从数据库中获取实际的统计数据
-      // 暂时使用模拟数据
-      this.passwordCount = 12
-      this.noteCount = 8
+    loadUserTools() {
+      // 从本地存储加载用户工具
+      const storedTools = localStorage.getItem('userTools')
+      if (storedTools) {
+        this.userTools = JSON.parse(storedTools)
+      } else {
+        // 默认工具
+        this.userTools = []
+        this.saveUserTools()
+      }
     },
-    async logout() {
-      await supabase.auth.signOut()
-      this.$router.push('/login')
+    saveUserTools() {
+      localStorage.setItem('userTools', JSON.stringify(this.userTools))
+      // 通知父组件更新工具列表
+      this.$emit('tools-updated', this.userTools)
+    },
+    addTool(tool) {
+      // 检查工具是否已经添加
+      const isAdded = this.userTools.some(t => t.id === tool.id)
+      if (!isAdded) {
+        this.userTools.push(tool)
+        this.saveUserTools()
+      }
+    },
+    removeTool(toolId) {
+      this.userTools = this.userTools.filter(tool => tool.id !== toolId)
+      this.saveUserTools()
     }
   }
 }
@@ -93,8 +128,8 @@ export default {
 <style scoped>
 .home {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20px;
+  background: #f5f7fa;
+  padding: 30px;
 }
 
 .header {
@@ -102,15 +137,17 @@ export default {
   justify-content: space-between;
   align-items: center;
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   margin-bottom: 30px;
 }
 
 .header h1 {
   color: #2c3e50;
   margin: 0;
+  font-size: 24px;
+  font-weight: 600;
 }
 
 .user-info {
@@ -121,109 +158,165 @@ export default {
 
 .user-info span {
   color: #666;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.btn-logout {
-  padding: 8px 16px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.btn-logout:hover {
-  background: #c0392b;
-}
-
-.dashboard {
+.tool-management {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+.add-tool-section,
+.added-tools-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   margin-bottom: 30px;
 }
 
-.stat-card {
-  background: white;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  text-align: center;
-}
-
-.stat-card h3 {
-  color: #666;
-  margin-bottom: 10px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.stat-card p {
-  font-size: 28px;
-  font-weight: bold;
-  color: #3498db;
-  margin: 0;
-}
-
-.quick-actions {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.quick-actions h2 {
+.add-tool-section h2,
+.added-tools-section h2 {
   color: #2c3e50;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.action-grid {
+.add-tool-section h2::before,
+.added-tools-section h2::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: #3498db;
+  border-radius: 2px;
+}
+
+.available-tools,
+.added-tools {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 
-.action-card {
+.tool-card {
   background: #f8f9fa;
   padding: 30px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #333;
-  transition: transform 0.3s, box-shadow 0.3s;
+  border-radius: 12px;
   text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  border: 2px solid transparent;
 }
 
-.action-card:hover {
+.tool-card.available {
+  cursor: pointer;
+}
+
+.tool-card.available:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  border-color: #3498db;
+  background: white;
 }
 
-.action-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
+.tool-card.added {
+  background: white;
+  border-color: #e0e0e0;
 }
 
-.action-card h3 {
+.tool-icon {
+  font-size: 56px;
+  margin-bottom: 20px;
+}
+
+.tool-card h3 {
   margin-bottom: 10px;
   color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.action-card p {
+.tool-card p {
   color: #666;
   font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.btn-add,
+.btn-use,
+.btn-remove {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-add {
+  background: #3498db;
+  color: white;
+}
+
+.btn-add:hover {
+  background: #2980b9;
+  transform: translateY(-2px);
+}
+
+.tool-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-use {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-use:hover {
+  background: #229954;
+  transform: translateY(-2px);
+}
+
+.btn-remove {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-remove:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e0e0e0;
 }
 
 @media (max-width: 768px) {
+  .home {
+    padding: 20px;
+  }
+  
   .header {
     flex-direction: column;
     gap: 15px;
     text-align: center;
+    padding: 20px;
   }
   
   .user-info {
@@ -231,8 +324,22 @@ export default {
     justify-content: center;
   }
   
-  .action-grid {
+  .add-tool-section,
+  .added-tools-section {
+    padding: 20px;
+  }
+  
+  .available-tools,
+  .added-tools {
     grid-template-columns: 1fr;
+  }
+  
+  .tool-card {
+    padding: 25px;
+  }
+  
+  .tool-icon {
+    font-size: 48px;
   }
 }
 </style>
