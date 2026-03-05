@@ -64,9 +64,14 @@
             <label>账号</label>
             <input type="text" v-model="form.username">
           </div>
-          <div class="form-group">
+          <div class="form-group password-input-group">
             <label>密码</label>
-            <input type="password" v-model="form.password" required>
+            <div class="password-input-wrapper">
+              <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required>
+              <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label>分类</label>
@@ -118,6 +123,7 @@ export default {
         tagsInput: '',
         note: ''
       },
+      showPassword: false,
       loading: false
     }
   },
@@ -286,6 +292,7 @@ export default {
     },
     resetForm() {
       this.editingPassword = null
+      this.showPassword = false
       this.form = {
         title: '',
         username: '',
@@ -499,6 +506,33 @@ export default {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.toggle-password:hover {
+  background: #f0f0f0;
 }
 
 .form-actions {
