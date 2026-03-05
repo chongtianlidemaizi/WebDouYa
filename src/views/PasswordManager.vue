@@ -140,32 +140,35 @@ export default {
     async loadPasswords() {
       this.loading = true
       try {
-        // 这里可以从数据库中获取实际的密码数据
-        // 暂时使用模拟数据
-        this.passwords = [
-          {
-            id: 1,
-            title: 'GitHub',
-            username: 'chongtianlidemaizi',
-            password: 'password123',
-            category: '网站',
-            tags: ['重要', '开发'],
-            note: 'GitHub账号密码'
-          },
-          {
-            id: 2,
-            title: 'QQ',
-            username: '1016798793',
-            password: 'qqpassword456',
-            category: '应用',
-            tags: ['个人'],
-            note: 'QQ账号密码'
-          }
-        ]
+        const { data, error } = await supabase
+          .from('passwords')
+          .select('*')
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          throw error
+        }
+        
+        this.passwords = data || []
       } catch (error) {
         console.error('加载密码失败:', error)
+        // 如果数据库表不存在，创建表
+        await this.createPasswordsTable()
+        this.passwords = []
       } finally {
         this.loading = false
+      }
+    },
+    async createPasswordsTable() {
+      try {
+        const { error } = await supabase
+          .rpc('create_passwords_table')
+        
+        if (error) {
+          console.error('创建密码表失败:', error)
+        }
+      } catch (error) {
+        console.error('创建密码表失败:', error)
       }
     },
     maskedPassword(password) {
@@ -199,7 +202,15 @@ export default {
       
       this.loading = true
       try {
-        // 这里可以从数据库中删除密码
+        const { error } = await supabase
+          .from('passwords')
+          .delete()
+          .eq('id', id)
+        
+        if (error) {
+          throw error
+        }
+        
         this.passwords = this.passwords.filter(p => p.id !== id)
       } catch (error) {
         console.error('删除密码失败:', error)
@@ -214,6 +225,22 @@ export default {
         
         if (this.editingPassword) {
           // 编辑现有密码
+          const { error } = await supabase
+            .from('passwords')
+            .update({
+              title: this.form.title,
+              username: this.form.username,
+              password: this.form.password,
+              category: this.form.category,
+              tags,
+              note: this.form.note
+            })
+            .eq('id', this.editingPassword.id)
+          
+          if (error) {
+            throw error
+          }
+          
           const index = this.passwords.findIndex(p => p.id === this.editingPassword.id)
           if (index !== -1) {
             this.passwords[index] = {
@@ -228,16 +255,25 @@ export default {
           }
         } else {
           // 添加新密码
-          const newPassword = {
-            id: Date.now(),
-            title: this.form.title,
-            username: this.form.username,
-            password: this.form.password,
-            category: this.form.category,
-            tags,
-            note: this.form.note
+          const { data, error } = await supabase
+            .from('passwords')
+            .insert({
+              title: this.form.title,
+              username: this.form.username,
+              password: this.form.password,
+              category: this.form.category,
+              tags,
+              note: this.form.note
+            })
+            .select()
+          
+          if (error) {
+            throw error
           }
-          this.passwords.push(newPassword)
+          
+          if (data && data[0]) {
+            this.passwords.unshift(data[0])
+          }
         }
         
         this.showAddForm = false

@@ -54,6 +54,7 @@
 
 <script>
 import { supabase } from './supabase'
+import { initDatabase } from './db-init'
 
 export default {
   name: 'App',
@@ -64,8 +65,14 @@ export default {
   },
   mounted() {
     this.loadUserTools()
+    this.initApp()
   },
   methods: {
+    async initApp() {
+      // 初始化数据库
+      await initDatabase()
+    },
+
     loadUserTools() {
       // 从本地存储加载用户工具
       const storedTools = localStorage.getItem('userTools')
