@@ -36,6 +36,10 @@
               <span class="nav-icon">👤</span>
               <span class="nav-text">个人中心</span>
             </router-link>
+          </div>
+          
+          <!-- 退出登录按钮移到最底部 -->
+          <div class="nav-section logout-section">
             <a href="#" class="nav-item logout-item" @click.prevent="logout">
               <span class="nav-icon">🚪</span>
               <span class="nav-text">退出登录</span>
@@ -210,8 +214,22 @@ body {
   font-style: italic;
 }
 
+.logout-section {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
 .logout-item {
   cursor: pointer;
+}
+
+/* 确保侧边栏导航区域有足够的高度，让退出登录按钮在底部 */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: calc(100vh - 150px);
 }
 
 /* 主内容区 */
