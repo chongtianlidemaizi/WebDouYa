@@ -344,8 +344,7 @@ export default {
               password: this.form.password,
               category: this.form.category,
               tags,
-              note: this.form.note,
-              is_local: !this.isVip // 非会员默认存储到本地
+              note: this.form.note
             })
             .select()
           
