@@ -149,7 +149,6 @@ async function initPasswordsTable() {
           category TEXT,
           tags TEXT[],
           note TEXT,
-          is_local BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT NOW(),
           FOREIGN KEY (user_id) REFERENCES users(id)
@@ -211,7 +210,6 @@ async function initNotesTable() {
           user_id UUID NOT NULL,
           title TEXT NOT NULL,
           content TEXT,
-          is_local BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT NOW(),
           FOREIGN KEY (user_id) REFERENCES users(id)

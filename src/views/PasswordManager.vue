@@ -372,7 +372,7 @@ export default {
         console.error('错误消息:', error.message)
         
         if (error.code === '42P01') {
-          alert('数据库表不存在，请在Supabase控制台创建密码表\n\nCREATE TABLE passwords (\n  id SERIAL PRIMARY KEY,\n  user_id UUID NOT NULL,\n  title TEXT NOT NULL,\n  username TEXT,\n  password TEXT NOT NULL,\n  category TEXT,\n  tags TEXT[],\n  note TEXT,\n  is_local BOOLEAN DEFAULT false,\n  created_at TIMESTAMP DEFAULT NOW(),\n  updated_at TIMESTAMP DEFAULT NOW(),\n  FOREIGN KEY (user_id) REFERENCES users(id)\n);')
+          alert('数据库表不存在，请在Supabase控制台创建密码表\n\nCREATE TABLE passwords (\n  id SERIAL PRIMARY KEY,\n  user_id UUID NOT NULL,\n  title TEXT NOT NULL,\n  username TEXT,\n  password TEXT NOT NULL,\n  category TEXT,\n  tags TEXT[],\n  note TEXT,\n  created_at TIMESTAMP DEFAULT NOW(),\n  updated_at TIMESTAMP DEFAULT NOW(),\n  FOREIGN KEY (user_id) REFERENCES users(id)\n);')
         } else if (error.code === '23503') {
           // 外键约束错误，用户可能不在users表中
           await this.ensureUserExists()
