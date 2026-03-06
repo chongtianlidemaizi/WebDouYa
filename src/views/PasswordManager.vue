@@ -23,7 +23,7 @@
       </div>
       <div class="filter-group">
           <label>{{ $t('common.search') }}</label>
-          <input type="text" v-model="filter.search" placeholder="{{ $t('common.search') }}...">
+          <input type="text" v-model="filter.search" :placeholder="$t('common.search') + '...'">
         </div>
     </div>
     
@@ -90,11 +90,11 @@
           </div>
           <div class="form-group">
             <label>{{ $t('passwords.tags') }}</label>
-            <input type="text" v-model="form.tagsInput" placeholder="{{ $t('passwords.tags') }} (用逗号分隔)">
+            <input type="text" v-model="form.tagsInput" :placeholder="$t('passwords.tags')">
           </div>
           <div class="form-group">
             <label>{{ $t('passwords.note') }}</label>
-            <textarea v-model="form.note" rows="3" placeholder="{{ $t('passwords.note') }}"></textarea>
+            <textarea v-model="form.note" rows="3" :placeholder="$t('passwords.note')"></textarea>
           </div>
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" @click="showAddForm = false">{{ $t('common.cancel') }}</button>
