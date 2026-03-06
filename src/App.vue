@@ -116,9 +116,10 @@ export default {
         // 检查用户是否已登录
         const user = localStorage.getItem('user')
         if (user) {
-          // 用户已登录，确保用户信息和工具已加载
+          // 用户已登录，确保用户信息已加载
           await this.loadUser()
-          if (this.user) {
+          if (this.user && this.userTools.length === 0) {
+            // 只有当用户工具为空时才加载，避免覆盖已更新的工具列表
             await this.loadUserTools()
           }
         }
