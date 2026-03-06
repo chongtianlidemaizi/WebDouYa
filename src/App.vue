@@ -115,8 +115,8 @@ export default {
       this.$router.beforeEach(async (to, from, next) => {
         // 检查用户是否已登录
         const user = localStorage.getItem('user')
-        if (user && !this.user) {
-          // 用户已登录但App.vue中的user为null，重新加载用户信息和工具
+        if (user) {
+          // 用户已登录，确保用户信息和工具已加载
           await this.loadUser()
           if (this.user) {
             await this.loadUserTools()
