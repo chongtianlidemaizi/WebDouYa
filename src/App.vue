@@ -92,7 +92,7 @@ export default {
   watch: {
     currentLanguage: {
       handler(newLang) {
-        this.locale.value = newLang
+        this.locale = newLang
         localStorage.setItem('language', newLang)
       },
       immediate: true
