@@ -19,7 +19,7 @@
         <div v-if="activeTab === 'users'" class="tab-content">
           <h2>{{ $t('admin.users') }}</h2>
           <div class="search-bar">
-            <input type="text" v-model="searchQuery" placeholder="{{ $t('admin.searchUsers') }}">
+            <input type="text" v-model="searchQuery" :placeholder="$t('admin.searchUsers')">
             <button class="btn btn-search" @click="fetchUsers">{{ $t('common.search') }}</button>
           </div>
           

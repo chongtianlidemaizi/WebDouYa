@@ -5,19 +5,19 @@
       <form @submit.prevent="register">
         <div class="form-group">
           <label>{{ $t('register.email') }}</label>
-          <input type="email" v-model="form.email" required placeholder="{{ $t('register.emailPlaceholder') }}">
+          <input type="email" v-model="form.email" required :placeholder="$t('register.emailPlaceholder')">
         </div>
         <div class="form-group">
           <label>{{ $t('register.password') }}</label>
-          <input type="password" v-model="form.password" required placeholder="{{ $t('register.passwordPlaceholder') }}" minlength="6">
+          <input type="password" v-model="form.password" required :placeholder="$t('register.passwordPlaceholder')" minlength="6">
         </div>
         <div class="form-group">
           <label>{{ $t('register.confirmPassword') }}</label>
-          <input type="password" v-model="form.confirmPassword" required placeholder="{{ $t('register.confirmPasswordPlaceholder') }}">
+          <input type="password" v-model="form.confirmPassword" required :placeholder="$t('register.confirmPasswordPlaceholder')">
         </div>
         <div class="form-group">
           <label>{{ $t('register.username') }}</label>
-          <input type="text" v-model="form.username" required placeholder="{{ $t('register.usernamePlaceholder') }}">
+          <input type="text" v-model="form.username" required :placeholder="$t('register.usernamePlaceholder')">
         </div>
         <button type="submit" class="btn" :disabled="loading">{{ $t('register.register') }}</button>
         <p class="login-link">{{ $t('register.login') }}<router-link to="/login"> {{ $t('register.loginNow') }}</router-link></p>

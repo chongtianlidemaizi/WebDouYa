@@ -5,11 +5,11 @@
       <form @submit.prevent="login">
         <div class="form-group">
           <label>{{ $t('login.email') }}</label>
-          <input type="email" v-model="form.email" required placeholder="{{ $t('login.emailPlaceholder') }}">
+          <input type="email" v-model="form.email" required :placeholder="$t('login.emailPlaceholder')">
         </div>
         <div class="form-group">
           <label>{{ $t('login.password') }}</label>
-          <input type="password" v-model="form.password" required placeholder="{{ $t('login.passwordPlaceholder') }}">
+          <input type="password" v-model="form.password" required :placeholder="$t('login.passwordPlaceholder')">
         </div>
         <div class="form-group remember">
           <input type="checkbox" v-model="form.remember">

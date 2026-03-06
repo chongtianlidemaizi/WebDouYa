@@ -12,9 +12,9 @@
     
     <div class="filter-section">
       <div class="filter-group">
-        <label>{{ $t('common.search') }}</label>
-        <input type="text" v-model="filter.search" placeholder="{{ $t('notes.searchPlaceholder') }}">
-      </div>
+          <label>{{ $t('common.search') }}</label>
+          <input type="text" v-model="filter.search" :placeholder="$t('notes.searchPlaceholder')">
+        </div>
     </div>
     
     <div class="notes-list">
@@ -49,11 +49,11 @@
         <form @submit.prevent="saveNote">
           <div class="form-group">
             <label>{{ $t('notes.title') }}</label>
-            <input type="text" v-model="form.title" required placeholder="{{ $t('notes.titlePlaceholder') }}">
+            <input type="text" v-model="form.title" required :placeholder="$t('notes.titlePlaceholder')">
           </div>
           <div class="form-group">
             <label>{{ $t('notes.content') }}</label>
-            <textarea v-model="form.content" rows="10" required placeholder="{{ $t('notes.contentPlaceholder') }}"></textarea>
+            <textarea v-model="form.content" rows="10" required :placeholder="$t('notes.contentPlaceholder')"></textarea>
           </div>
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" @click="showAddForm = false">{{ $t('common.cancel') }}</button>
