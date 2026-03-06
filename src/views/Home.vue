@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="header">
-      <h1>工具管理</h1>
+      <h1>{{ $t('home.title') }}</h1>
       <div class="user-info">
         <span>{{ user?.email }}</span>
       </div>
@@ -10,7 +10,7 @@
     <div class="tool-management">
       <!-- 添加工具部分 -->
       <div class="add-tool-section">
-        <h2>添加工具</h2>
+        <h2>{{ $t('home.add') }} {{ $t('nav.tools') }}</h2>
         <div class="available-tools">
           <div 
             v-for="tool in availableTools" 
@@ -20,16 +20,16 @@
             <div class="tool-icon">{{ tool.icon }}</div>
             <h3>{{ tool.name }}</h3>
             <p>{{ tool.description }}</p>
-            <button class="btn-add" @click="addTool(tool)">添加</button>
+            <button class="btn-add" @click="addTool(tool)">{{ $t('home.add') }}</button>
           </div>
         </div>
       </div>
       
       <!-- 已添加工具部分 -->
       <div class="added-tools-section">
-        <h2>已添加工具</h2>
+        <h2>{{ $t('home.added') }} {{ $t('nav.tools') }}</h2>
         <div v-if="userTools.length === 0" class="empty-state">
-          <p>还没有添加任何工具，点击上方的工具卡片来添加</p>
+          <p>{{ $t('home.noTools') }}</p>
         </div>
         <div v-else class="added-tools">
           <div 
@@ -41,8 +41,8 @@
             <h3>{{ tool.name }}</h3>
             <p>{{ tool.description }}</p>
             <div class="tool-actions">
-              <router-link :to="tool.route" class="btn-use">使用</router-link>
-              <button class="btn-remove" @click="removeTool(tool.id)">移除</button>
+              <router-link :to="tool.route" class="btn-use">{{ $t('common.use') }}</router-link>
+              <button class="btn-remove" @click="removeTool(tool.id)">{{ $t('home.remove') }}</button>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default {
     },
     async addTool(tool) {
       if (!this.user) {
-        alert('请先登录')
+        alert(this.$t('common.loginFirst'))
         return
       }
       

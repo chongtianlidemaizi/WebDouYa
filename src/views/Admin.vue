@@ -1,58 +1,58 @@
 <template>
   <div class="admin">
     <div class="header">
-      <h1>管理后台</h1>
-      <button class="btn btn-logout" @click="logout">退出登录</button>
+      <h1>{{ $t('admin.title') }}</h1>
+      <button class="btn btn-logout" @click="logout">{{ $t('nav.logout') }}</button>
     </div>
     
     <div class="admin-content">
       <div class="sidebar">
         <ul>
-          <li :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">用户管理</li>
-          <li :class="{ active: activeTab === 'vip' }" @click="activeTab = 'vip'">会员管理</li>
-          <li :class="{ active: activeTab === 'tools' }" @click="activeTab = 'tools'">工具管理</li>
+          <li :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">{{ $t('admin.users') }}</li>
+          <li :class="{ active: activeTab === 'vip' }" @click="activeTab = 'vip'">{{ $t('admin.vipManagement') }}</li>
+          <li :class="{ active: activeTab === 'tools' }" @click="activeTab = 'tools'">{{ $t('admin.tools') }}</li>
         </ul>
       </div>
       
       <div class="main-content">
         <!-- 用户管理 -->
         <div v-if="activeTab === 'users'" class="tab-content">
-          <h2>用户管理</h2>
+          <h2>{{ $t('admin.users') }}</h2>
           <div class="search-bar">
-            <input type="text" v-model="searchQuery" placeholder="搜索用户...">
-            <button class="btn btn-search" @click="fetchUsers">搜索</button>
+            <input type="text" v-model="searchQuery" placeholder="{{ $t('admin.searchUsers') }}">
+            <button class="btn btn-search" @click="fetchUsers">{{ $t('common.search') }}</button>
           </div>
           
-          <div v-if="loading" class="loading">加载中...</div>
+          <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
           <table v-else>
             <thead>
               <tr>
                 <th>ID</th>
-                <th>邮箱</th>
-                <th>用户名</th>
-                <th>注册时间</th>
-                <th>账号类型</th>
-                <th>会员到期</th>
-                <th>操作</th>
+                <th>{{ $t('profile.email') }}</th>
+                <th>{{ $t('profile.username') }}</th>
+                <th>{{ $t('profile.registrationTime') }}</th>
+                <th>{{ $t('profile.accountType') }}</th>
+                <th>{{ $t('profile.expires') }}</th>
+                <th>{{ $t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="user in users" :key="user.id">
                 <td>{{ user.id }}</td>
                 <td>{{ user.email }}</td>
-                <td>{{ user.user_metadata?.username || '未设置' }}</td>
+                <td>{{ user.user_metadata?.username || $t('profile.notSet') }}</td>
                 <td>{{ formatDate(user.created_at) }}</td>
                 <td :class="['user-role', user.is_vip ? 'vip' : '']">
-                  {{ user.is_vip ? '会员' : '普通' }}
+                  {{ user.is_vip ? $t('profile.vip') : $t('profile.notVip') }}
                 </td>
-                <td>{{ user.vip_expires_at ? formatDate(user.vip_expires_at) : '无' }}</td>
+                <td>{{ user.vip_expires_at ? formatDate(user.vip_expires_at) : $t('admin.none') }}</td>
                 <td>
-                  <button class="btn btn-edit" @click="editUser(user)">编辑</button>
-                  <button class="btn btn-delete" @click="deleteUser(user.id)">删除</button>
+                  <button class="btn btn-edit" @click="editUser(user)">{{ $t('admin.edit') }}</button>
+                  <button class="btn btn-delete" @click="deleteUser(user.id)">{{ $t('admin.delete') }}</button>
                 </td>
               </tr>
               <tr v-if="users.length === 0">
-                <td colspan="7" class="no-data">暂无用户</td>
+                <td colspan="7" class="no-data">{{ $t('admin.noUsers') }}</td>
               </tr>
             </tbody>
           </table>
@@ -60,35 +60,35 @@
         
         <!-- 会员管理 -->
         <div v-if="activeTab === 'vip'" class="tab-content">
-          <h2>会员管理</h2>
+          <h2>{{ $t('admin.vipManagement') }}</h2>
           <div class="vip-actions">
-            <button class="btn btn-primary" @click="openVipModal">添加会员</button>
+            <button class="btn btn-primary" @click="openVipModal">{{ $t('admin.addVip') }}</button>
           </div>
           
-          <div v-if="loading" class="loading">加载中...</div>
+          <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
           <table v-else>
             <thead>
               <tr>
                 <th>ID</th>
-                <th>邮箱</th>
-                <th>用户名</th>
-                <th>会员到期</th>
-                <th>操作</th>
+                <th>{{ $t('profile.email') }}</th>
+                <th>{{ $t('profile.username') }}</th>
+                <th>{{ $t('profile.expires') }}</th>
+                <th>{{ $t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="user in vipUsers" :key="user.id">
                 <td>{{ user.id }}</td>
                 <td>{{ user.email }}</td>
-                <td>{{ user.user_metadata?.username || '未设置' }}</td>
+                <td>{{ user.user_metadata?.username || $t('profile.notSet') }}</td>
                 <td>{{ formatDate(user.vip_expires_at) }}</td>
                 <td>
-                  <button class="btn btn-edit" @click="extendVip(user)">续期</button>
-                  <button class="btn btn-delete" @click="removeVip(user.id)">取消会员</button>
+                  <button class="btn btn-edit" @click="extendVip(user)">{{ $t('admin.extend') }}</button>
+                  <button class="btn btn-delete" @click="removeVip(user.id)">{{ $t('admin.removeVip') }}</button>
                 </td>
               </tr>
               <tr v-if="vipUsers.length === 0">
-                <td colspan="5" class="no-data">暂无会员</td>
+                <td colspan="5" class="no-data">{{ $t('admin.noVipUsers') }}</td>
               </tr>
             </tbody>
           </table>
@@ -96,20 +96,20 @@
         
         <!-- 工具管理 -->
         <div v-if="activeTab === 'tools'" class="tab-content">
-          <h2>工具管理</h2>
+          <h2>{{ $t('admin.tools') }}</h2>
           <div class="tool-actions">
-            <button class="btn btn-primary" @click="openToolModal">添加工具</button>
+            <button class="btn btn-primary" @click="openToolModal">{{ $t('admin.addTool') }}</button>
           </div>
           
-          <div v-if="loading" class="loading">加载中...</div>
+          <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
           <table v-else>
             <thead>
               <tr>
                 <th>ID</th>
-                <th>工具名称</th>
-                <th>工具描述</th>
-                <th>创建时间</th>
-                <th>操作</th>
+                <th>{{ $t('admin.toolName') }}</th>
+                <th>{{ $t('admin.toolDescription') }}</th>
+                <th>{{ $t('admin.createdAt') }}</th>
+                <th>{{ $t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -119,12 +119,12 @@
                 <td>{{ tool.description }}</td>
                 <td>{{ formatDate(tool.created_at) }}</td>
                 <td>
-                  <button class="btn btn-edit" @click="editTool(tool)">编辑</button>
-                  <button class="btn btn-delete" @click="deleteTool(tool.id)">删除</button>
+                  <button class="btn btn-edit" @click="editTool(tool)">{{ $t('admin.edit') }}</button>
+                  <button class="btn btn-delete" @click="deleteTool(tool.id)">{{ $t('admin.delete') }}</button>
                 </td>
               </tr>
               <tr v-if="tools.length === 0">
-                <td colspan="5" class="no-data">暂无工具</td>
+                <td colspan="5" class="no-data">{{ $t('admin.noTools') }}</td>
               </tr>
             </tbody>
           </table>
@@ -135,30 +135,30 @@
     <!-- 编辑用户弹窗 -->
     <div v-if="showEditModal" class="modal">
       <div class="modal-content">
-        <h3>编辑用户</h3>
+        <h3>{{ $t('admin.editUser') }}</h3>
         <form @submit.prevent="saveUser">
           <div class="form-group">
-            <label>邮箱</label>
+            <label>{{ $t('profile.email') }}</label>
             <input type="email" v-model="editUserForm.email" disabled>
           </div>
           <div class="form-group">
-            <label>用户名</label>
+            <label>{{ $t('profile.username') }}</label>
             <input type="text" v-model="editUserForm.username">
           </div>
           <div class="form-group">
-            <label>会员状态</label>
+            <label>{{ $t('profile.status') }}</label>
             <select v-model="editUserForm.is_vip">
-              <option value="false">普通用户</option>
-              <option value="true">会员用户</option>
+              <option value="false">{{ $t('profile.notVip') }}</option>
+              <option value="true">{{ $t('profile.vip') }}</option>
             </select>
           </div>
           <div class="form-group" v-if="editUserForm.is_vip === 'true'">
-            <label>会员到期时间</label>
+            <label>{{ $t('profile.expires') }}</label>
             <input type="date" v-model="editUserForm.vip_expires_at">
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" @click="showEditModal = false">取消</button>
-            <button type="submit" class="btn btn-primary" :disabled="loading">保存</button>
+            <button type="button" class="btn btn-secondary" @click="showEditModal = false">{{ $t('common.cancel') }}</button>
+            <button type="submit" class="btn btn-primary" :disabled="loading">{{ $t('common.save') }}</button>
           </div>
         </form>
       </div>
@@ -277,7 +277,7 @@ export default {
       }
     },
     async deleteUser(id) {
-      if (!confirm('确定要删除这个用户吗？')) {
+      if (!confirm(this.$t('admin.confirmDeleteUser'))) {
         return
       }
       
@@ -290,7 +290,7 @@ export default {
         
         if (error) {
           console.error('删除用户失败:', error)
-          alert('删除失败，请重试')
+          alert(this.$t('admin.deleteFailed'))
           return
         }
         
@@ -304,7 +304,7 @@ export default {
         await this.fetchVipUsers()
       } catch (error) {
         console.error('删除用户时出错:', error)
-        alert('删除失败，请重试')
+        alert(this.$t('admin.deleteFailed'))
       } finally {
         this.loading = false
       }
@@ -342,7 +342,7 @@ export default {
         
         if (error) {
           console.error('更新用户失败:', error)
-          alert('更新失败，请重试')
+          alert(this.$t('admin.updateFailed'))
           return
         }
         
@@ -351,7 +351,7 @@ export default {
         await this.fetchVipUsers()
       } catch (error) {
         console.error('更新用户时出错:', error)
-        alert('更新失败，请重试')
+        alert(this.$t('admin.updateFailed'))
       } finally {
         this.loading = false
       }
@@ -373,20 +373,20 @@ export default {
         
         if (error) {
           console.error('续期会员失败:', error)
-          alert('续期失败，请重试')
+          alert(this.$t('admin.extendFailed'))
           return
         }
         
         await this.fetchVipUsers()
       } catch (error) {
         console.error('续期会员时出错:', error)
-        alert('续期失败，请重试')
+        alert(this.$t('admin.extendFailed'))
       } finally {
         this.loading = false
       }
     },
     async removeVip(id) {
-      if (!confirm('确定要取消这个用户的会员资格吗？')) {
+      if (!confirm(this.$t('admin.confirmRemoveVip'))) {
         return
       }
       
@@ -402,7 +402,7 @@ export default {
         
         if (error) {
           console.error('取消会员失败:', error)
-          alert('取消失败，请重试')
+          alert(this.$t('admin.removeFailed'))
           return
         }
         
@@ -410,13 +410,13 @@ export default {
         await this.fetchVipUsers()
       } catch (error) {
         console.error('取消会员时出错:', error)
-        alert('取消失败，请重试')
+        alert(this.$t('admin.removeFailed'))
       } finally {
         this.loading = false
       }
     },
     async deleteTool(id) {
-      if (!confirm('确定要删除这个工具吗？')) {
+      if (!confirm(this.$t('admin.confirmDeleteTool'))) {
         return
       }
       
@@ -429,33 +429,34 @@ export default {
         
         if (error) {
           console.error('删除工具失败:', error)
-          alert('删除失败，请重试')
+          alert(this.$t('admin.deleteFailed'))
           return
         }
         
         await this.fetchTools()
       } catch (error) {
         console.error('删除工具时出错:', error)
-        alert('删除失败，请重试')
+        alert(this.$t('admin.deleteFailed'))
       } finally {
         this.loading = false
       }
     },
     openVipModal() {
       // 打开添加会员弹窗
-      alert('添加会员功能开发中')
+      alert(this.$t('admin.featureInDevelopment'))
     },
     openToolModal() {
       // 打开添加工具弹窗
-      alert('添加工具功能开发中')
+      alert(this.$t('admin.featureInDevelopment'))
     },
     editTool(tool) {
       // 编辑工具
-      alert('编辑工具功能开发中')
+      alert(this.$t('admin.featureInDevelopment'))
     },
     formatDate(date) {
-      if (!date) return '未知'
-      return new Date(date).toLocaleString('zh-CN')
+      if (!date) return this.$t('admin.unknown')
+      const locale = this.$i18n.locale
+      return new Date(date).toLocaleString(locale)
     },
     async logout() {
       await supabase.auth.signOut()

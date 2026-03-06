@@ -4,18 +4,18 @@
       <!-- 侧边导航 -->
       <div class="sidebar">
         <div class="sidebar-header">
-          <h1 class="app-name">豆芽工作流</h1>
-          <p class="app-desc">个性化工具管理</p>
+          <h1 class="app-name">{{ $t('app.name') }}</h1>
+          <p class="app-desc">{{ $t('app.desc') }}</p>
         </div>
         
         <nav class="sidebar-nav">
           <router-link to="/home" class="nav-item home-item">
             <span class="nav-icon">🏠</span>
-            <span class="nav-text">工具管理</span>
+            <span class="nav-text">{{ $t('nav.home') }}</span>
           </router-link>
           
           <div class="nav-section">
-            <h3 class="nav-section-title">已添加工具</h3>
+            <h3 class="nav-section-title">{{ $t('nav.tools') }}</h3>
             <router-link 
               v-for="tool in userTools" 
               :key="tool.id" 
@@ -26,23 +26,35 @@
               <span class="nav-text">{{ tool.name }}</span>
             </router-link>
             <div v-if="userTools.length === 0" class="empty-tools">
-              <p>暂无已添加工具</p>
+              <p>{{ $t('home.noTools') }}</p>
             </div>
           </div>
           
           <div class="nav-section">
-            <h3 class="nav-section-title">账户</h3>
+            <h3 class="nav-section-title">{{ $t('nav.account') }}</h3>
             <router-link to="/profile" class="nav-item profile-item">
               <span class="nav-icon">👤</span>
-              <span class="nav-text">个人中心</span>
+              <span class="nav-text">{{ $t('nav.profile') }}</span>
             </router-link>
+          </div>
+          
+          <!-- 语言选择 -->
+          <div class="nav-section language-section">
+            <h3 class="nav-section-title">{{ $t('common.language') }}</h3>
+            <div class="language-selector">
+              <select v-model="currentLanguage" @change="changeLanguage" class="language-select">
+                <option value="zh-CN">{{ $t('language.zhCN') }}</option>
+                <option value="zh-TW">{{ $t('language.zhTW') }}</option>
+                <option value="en">{{ $t('language.en') }}</option>
+              </select>
+            </div>
           </div>
           
           <!-- 退出登录按钮移到最底部 -->
           <div class="nav-section logout-section">
             <a href="#" class="nav-item logout-item" @click.prevent="logout">
               <span class="nav-icon">🚪</span>
-              <span class="nav-text">退出登录</span>
+              <span class="nav-text">{{ $t('nav.logout') }}</span>
             </a>
           </div>
         </nav>
@@ -59,13 +71,22 @@
 <script>
 import { supabase } from './supabase'
 import { initDatabase } from './db-init'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'App',
+  setup() {
+    const { locale } = useI18n()
+    
+    return {
+      locale
+    }
+  },
   data() {
     return {
       userTools: [],
-      user: null
+      user: null,
+      currentLanguage: localStorage.getItem('language') || 'zh-CN'
     }
   },
   async mounted() {
@@ -209,6 +230,10 @@ export default {
       localStorage.removeItem('user')
       localStorage.removeItem('savedLogin')
       this.$router.push('/login')
+    },
+    changeLanguage() {
+      this.locale.value = this.currentLanguage
+      localStorage.setItem('language', this.currentLanguage)
     }
   }
 }
@@ -324,6 +349,30 @@ body {
   color: rgba(255,255,255,0.5);
   font-size: 14px;
   font-style: italic;
+}
+
+.language-section {
+  margin-top: 20px;
+}
+
+.language-selector {
+  padding: 0 16px;
+}
+
+.language-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.language-select option {
+  background: #2c3e50;
+  color: white;
 }
 
 .logout-section {

@@ -1,27 +1,27 @@
 <template>
   <div class="notes">
     <div class="header">
-      <h1>记事管理</h1>
+      <h1>{{ $t('notes.title') }}</h1>
       <div class="header-right">
         <div class="note-limit">
-          {{ noteCount }}/{{ currentNoteLimit }} 个记事
+          {{ $t('notes.limit', { count: noteCount, limit: currentNoteLimit }) }}
         </div>
-        <button class="btn-add" @click="showAddForm = true" :disabled="!canAddNote">添加记事</button>
+        <button class="btn-add" @click="showAddForm = true" :disabled="!canAddNote">{{ $t('notes.add') }}</button>
       </div>
     </div>
     
     <div class="filter-section">
       <div class="filter-group">
-        <label>搜索</label>
-        <input type="text" v-model="filter.search" placeholder="搜索记事...">
+        <label>{{ $t('common.search') }}</label>
+        <input type="text" v-model="filter.search" placeholder="{{ $t('notes.searchPlaceholder') }}">
       </div>
     </div>
     
     <div class="notes-list">
-      <div v-if="loading" class="loading">加载中...</div>
+      <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
       <div v-else-if="filteredNotes.length === 0" class="empty">
-        <p>暂无记事</p>
-        <button class="btn" @click="showAddForm = true">添加第一个记事</button>
+        <p>{{ $t('notes.noNotes') }}</p>
+        <button class="btn" @click="showAddForm = true">{{ $t('notes.add') }}</button>
       </div>
       <div v-else class="notes-grid">
         <div v-for="note in filteredNotes" :key="note.id" class="note-card">
@@ -45,19 +45,19 @@
     <!-- 添加/编辑记事表单 -->
     <div v-if="showAddForm" class="modal-overlay" @click="showAddForm = false">
       <div class="modal" @click.stop>
-        <h2>{{ editingNote ? '编辑记事' : '添加记事' }}</h2>
+        <h2>{{ editingNote ? $t('notes.edit') : $t('notes.add') }}</h2>
         <form @submit.prevent="saveNote">
           <div class="form-group">
-            <label>标题</label>
-            <input type="text" v-model="form.title" required>
+            <label>{{ $t('notes.title') }}</label>
+            <input type="text" v-model="form.title" required placeholder="{{ $t('notes.titlePlaceholder') }}">
           </div>
           <div class="form-group">
-            <label>内容</label>
-            <textarea v-model="form.content" rows="10" required placeholder="输入记事内容..."></textarea>
+            <label>{{ $t('notes.content') }}</label>
+            <textarea v-model="form.content" rows="10" required placeholder="{{ $t('notes.contentPlaceholder') }}"></textarea>
           </div>
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="showAddForm = false">取消</button>
-            <button type="submit" class="btn" :disabled="loading">保存</button>
+            <button type="button" class="btn btn-secondary" @click="showAddForm = false">{{ $t('common.cancel') }}</button>
+            <button type="submit" class="btn" :disabled="loading">{{ $t('common.save') }}</button>
           </div>
         </form>
       </div>
@@ -191,7 +191,7 @@ export default {
       this.showAddForm = true
     },
     async deleteNote(id) {
-      if (!confirm('确定要删除这个记事吗？')) {
+      if (!confirm(this.$t('notes.confirmDelete'))) {
         return
       }
       
@@ -217,7 +217,7 @@ export default {
     async saveNote() {
       // 检查是否达到记事数量限制
       if (!this.editingNote && !this.canAddNote) {
-        alert(`您已达到记事存储限制（${this.currentNoteLimit}个），升级为会员可存储更多记事`)
+        alert(this.$t('notes.limitExceeded', { limit: this.currentNoteLimit }))
         return
       }
       
@@ -245,6 +245,7 @@ export default {
               content: this.form.content
             }
           }
+          alert(this.$t('notes.updateSuccess'))
         } else {
           // 添加新记事
           const { data, error } = await supabase
@@ -263,6 +264,7 @@ export default {
           if (data && data[0]) {
             this.notes.unshift(data[0])
             this.noteCount++
+            alert(this.$t('notes.success'))
           }
         }
         

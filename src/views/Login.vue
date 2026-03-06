@@ -1,22 +1,22 @@
 <template>
   <div class="login">
     <div class="login-container">
-      <h1>登录账号</h1>
+      <h1>{{ $t('login.title') }}</h1>
       <form @submit.prevent="login">
         <div class="form-group">
-          <label>邮箱</label>
-          <input type="email" v-model="form.email" required placeholder="请输入邮箱">
+          <label>{{ $t('login.email') }}</label>
+          <input type="email" v-model="form.email" required placeholder="{{ $t('login.emailPlaceholder') }}">
         </div>
         <div class="form-group">
-          <label>密码</label>
-          <input type="password" v-model="form.password" required placeholder="请输入密码">
+          <label>{{ $t('login.password') }}</label>
+          <input type="password" v-model="form.password" required placeholder="{{ $t('login.passwordPlaceholder') }}">
         </div>
         <div class="form-group remember">
           <input type="checkbox" v-model="form.remember">
-          <label>记住我</label>
+          <label>{{ $t('login.remember') }}</label>
         </div>
-        <button type="submit" class="btn" :disabled="loading">登录</button>
-        <p class="register-link">没有账号？<router-link to="/">立即注册</router-link></p>
+        <button type="submit" class="btn" :disabled="loading">{{ $t('login.login') }}</button>
+        <p class="register-link">{{ $t('login.register') }}<router-link to="/"> {{ $t('login.registerNow') }}</router-link></p>
       </form>
       <div v-if="error" class="error-message">{{ error }}</div>
     </div>

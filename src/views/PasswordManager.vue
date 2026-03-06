@@ -1,56 +1,56 @@
 <template>
   <div class="password-manager">
     <div class="header">
-      <h1>密码管理</h1>
+      <h1>{{ $t('passwords.title') }}</h1>
       <div class="header-right">
         <div class="password-limit">
-          {{ passwordCount }}/{{ currentPasswordLimit }} 个密码
+          {{ $t('passwords.limit', { count: passwordCount, limit: currentPasswordLimit }) }}
         </div>
-        <button class="btn-add" @click="showAddForm = true" :disabled="!canAddPassword">添加密码</button>
+        <button class="btn-add" @click="showAddForm = true" :disabled="!canAddPassword">{{ $t('passwords.add') }}</button>
       </div>
     </div>
     
     <div class="filter-section">
       <div class="filter-group">
-        <label>分类</label>
+        <label>{{ $t('common.category') }}</label>
         <select v-model="filter.category">
-          <option value="">全部</option>
-          <option value="网站">网站</option>
-          <option value="应用">应用</option>
-          <option value="银行">银行</option>
-          <option value="其他">其他</option>
+          <option value="">{{ $t('common.all') }}</option>
+          <option value="网站">{{ $t('common.website') }}</option>
+          <option value="应用">{{ $t('common.app') }}</option>
+          <option value="银行">{{ $t('common.bank') }}</option>
+          <option value="其他">{{ $t('common.other') }}</option>
         </select>
       </div>
       <div class="filter-group">
-        <label>搜索</label>
-        <input type="text" v-model="filter.search" placeholder="搜索密码...">
+        <label>{{ $t('common.search') }}</label>
+        <input type="text" v-model="filter.search" :placeholder="$t('passwords.searchPlaceholder')">
       </div>
     </div>
     
     <div class="password-list">
-      <div v-if="loading" class="loading">加载中...</div>
+      <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
       <div v-else-if="filteredPasswords.length === 0" class="empty">
-        <p>暂无密码记录</p>
-        <button class="btn" @click="showAddForm = true">添加第一个密码</button>
+        <p>{{ $t('passwords.noPasswords') }}</p>
+        <button class="btn" @click="showAddForm = true">{{ $t('passwords.addFirst') }}</button>
       </div>
       <div v-else class="password-grid">
         <div v-for="password in filteredPasswords" :key="password.id" class="password-card">
           <div class="password-header">
             <h3>{{ password.title }}</h3>
             <div class="password-actions">
-              <button class="btn-action" @click="copyPassword(password.password)">📋</button>
-              <button class="btn-action" @click="editPassword(password)">✏️</button>
-              <button class="btn-action" @click="deletePassword(password.id)">🗑️</button>
+              <button class="btn-action" @click="copyPassword(password.password)" :title="$t('passwords.copy')">📋</button>
+              <button class="btn-action" @click="editPassword(password)" :title="$t('passwords.edit')">✏️</button>
+              <button class="btn-action" @click="deletePassword(password.id)" :title="$t('passwords.delete')">🗑️</button>
             </div>
           </div>
           <div class="password-details">
-            <p><strong>账号:</strong> {{ password.username }}</p>
-            <p><strong>密码:</strong> {{ maskedPassword(password.password) }}</p>
-            <p><strong>分类:</strong> {{ password.category }}</p>
-            <p><strong>标签:</strong> 
+            <p><strong>{{ $t('passwords.username') }}:</strong> {{ password.username }}</p>
+            <p><strong>{{ $t('passwords.password') }}:</strong> {{ maskedPassword(password.password) }}</p>
+            <p><strong>{{ $t('common.category') }}:</strong> {{ password.category }}</p>
+            <p><strong>{{ $t('passwords.tags') }}:</strong> 
               <span v-for="tag in password.tags" :key="tag" class="tag">{{ tag }}</span>
             </p>
-            <p><strong>备注:</strong> {{ password.note || '无' }}</p>
+            <p><strong>{{ $t('passwords.note') }}:</strong> {{ password.note || $t('common.none') }}</p>
           </div>
         </div>
       </div>
@@ -59,46 +59,46 @@
     <!-- 添加/编辑密码表单 -->
     <div v-if="showAddForm" class="modal-overlay" @click="showAddForm = false">
       <div class="modal" @click.stop>
-        <h2>{{ editingPassword ? '编辑密码' : '添加密码' }}</h2>
+        <h2>{{ editingPassword ? $t('passwords.edit') : $t('passwords.add') }}</h2>
         <form @submit.prevent="savePassword">
           <div class="form-group">
-            <label>标题</label>
-            <input type="text" v-model="form.title" required>
+            <label>{{ $t('passwords.title') }}</label>
+            <input type="text" v-model="form.title" required :placeholder="$t('passwords.titlePlaceholder')">
           </div>
           <div class="form-group">
-            <label>账号</label>
-            <input type="text" v-model="form.username">
+            <label>{{ $t('passwords.username') }}</label>
+            <input type="text" v-model="form.username" :placeholder="$t('passwords.usernamePlaceholder')">
           </div>
           <div class="form-group password-input-group">
-            <label>密码</label>
+            <label>{{ $t('passwords.password') }}</label>
             <div class="password-input-wrapper">
-              <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required>
+              <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required :placeholder="$t('passwords.passwordPlaceholder')">
               <button type="button" class="toggle-password" @click="showPassword = !showPassword">
                 {{ showPassword ? '🙈' : '👁️' }}
               </button>
             </div>
           </div>
           <div class="form-group">
-            <label>分类</label>
+            <label>{{ $t('common.category') }}</label>
             <select v-model="form.category" required>
-              <option value="">请选择分类</option>
-              <option value="网站">网站</option>
-              <option value="应用">应用</option>
-              <option value="银行">银行</option>
-              <option value="其他">其他</option>
+              <option value="">{{ $t('passwords.selectCategory') }}</option>
+              <option value="网站">{{ $t('common.website') }}</option>
+              <option value="应用">{{ $t('common.app') }}</option>
+              <option value="银行">{{ $t('common.bank') }}</option>
+              <option value="其他">{{ $t('common.other') }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>标签 (用逗号分隔)</label>
-            <input type="text" v-model="form.tagsInput" placeholder="例如: 重要,工作,个人">
+            <label>{{ $t('passwords.tags') }}</label>
+            <input type="text" v-model="form.tagsInput" :placeholder="$t('passwords.tagsPlaceholder')">
           </div>
           <div class="form-group">
-            <label>备注</label>
-            <textarea v-model="form.note" rows="3" placeholder="添加备注..."></textarea>
+            <label>{{ $t('passwords.note') }}</label>
+            <textarea v-model="form.note" rows="3" :placeholder="$t('passwords.notePlaceholder')"></textarea>
           </div>
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="showAddForm = false">取消</button>
-            <button type="submit" class="btn" :disabled="loading">保存</button>
+            <button type="button" class="btn btn-secondary" @click="showAddForm = false">{{ $t('common.cancel') }}</button>
+            <button type="submit" class="btn" :disabled="loading">{{ $t('common.save') }}</button>
           </div>
         </form>
       </div>

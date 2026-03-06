@@ -1,107 +1,107 @@
 <template>
   <div class="profile">
     <div class="header">
-      <h1>个人中心</h1>
+      <h1>{{ $t('profile.title') }}</h1>
     </div>
     
     <div class="profile-content">
       <div class="user-info">
-        <h2>用户信息</h2>
+        <h2>{{ $t('profile.account') }}</h2>
         <div class="info-item">
-          <label>邮箱</label>
+          <label>{{ $t('profile.email') }}</label>
           <span>{{ user?.email }}</span>
         </div>
         <div class="info-item">
-          <label>用户名</label>
-          <span>{{ user?.user_metadata?.username || '未设置' }}</span>
+          <label>{{ $t('profile.username') }}</label>
+          <span>{{ user?.user_metadata?.username || $t('profile.notSet') }}</span>
         </div>
         <div class="info-item">
-          <label>账号类型</label>
-          <span :class="['user-role', userRole === '会员用户' ? 'vip' : '']">{{ userRole }}</span>
+          <label>{{ $t('profile.accountType') }}</label>
+          <span :class="['user-role', userRole === $t('profile.vip') ? 'vip' : '']">{{ userRole }}</span>
         </div>
         <div class="info-item">
-          <label>注册时间</label>
+          <label>{{ $t('profile.registrationTime') }}</label>
           <span>{{ formatDate(user?.created_at) }}</span>
         </div>
       </div>
       
       <div class="account-settings">
-        <h2>账户设置</h2>
+        <h2>{{ $t('profile.accountSettings') }}</h2>
         
         <div class="settings-section">
-          <h3>修改密码</h3>
+          <h3>{{ $t('profile.changePassword') }}</h3>
           <form @submit.prevent="changePassword">
             <div class="form-group">
-              <label>当前密码</label>
+              <label>{{ $t('profile.currentPassword') }}</label>
               <input type="password" v-model="passwordForm.currentPassword" required>
             </div>
             <div class="form-group">
-              <label>新密码</label>
+              <label>{{ $t('profile.newPassword') }}</label>
               <input type="password" v-model="passwordForm.newPassword" required minlength="6">
             </div>
             <div class="form-group">
-              <label>确认新密码</label>
+              <label>{{ $t('profile.confirmPassword') }}</label>
               <input type="password" v-model="passwordForm.confirmPassword" required>
             </div>
             <div class="form-note">
-              <p>注意：修改密码需要通过邮箱验证，我们会向您的邮箱发送验证码。</p>
+              <p>{{ $t('profile.passwordNote') }}</p>
             </div>
-            <button type="submit" class="btn" :disabled="loading">修改密码</button>
+            <button type="submit" class="btn" :disabled="loading">{{ $t('profile.change') }}</button>
           </form>
         </div>
         
         <div class="settings-section">
-          <h3>会员升级</h3>
-          <div class="membership-card" v-if="userRole === '普通用户'">
-            <h4>升级为会员用户</h4>
-            <p>会员用户享有以下特权：</p>
+          <h3>{{ $t('profile.vip') }}</h3>
+          <div class="membership-card" v-if="userRole === $t('profile.notVip')">
+            <h4>{{ $t('profile.upgradeToVip') }}</h4>
+            <p>{{ $t('profile.vipBenefits') }}</p>
             <ul>
-              <li>密码存储上限提升至32个</li>
-              <li>记事存储上限提升至32个</li>
-              <li>云端数据同步</li>
-              <li>优先技术支持</li>
+              <li>{{ $t('profile.passwordLimitUpgrade') }}</li>
+              <li>{{ $t('profile.noteLimitUpgrade') }}</li>
+              <li>{{ $t('profile.cloudSync') }}</li>
+              <li>{{ $t('profile.prioritySupport') }}</li>
             </ul>
-            <button class="btn btn-vip" @click="upgradeToVip" :disabled="loading">立即升级</button>
+            <button class="btn btn-vip" @click="upgradeToVip" :disabled="loading">{{ $t('profile.upgrade') }}</button>
           </div>
           <div class="membership-card vip" v-else>
-            <h4>您已是会员用户</h4>
-            <p>感谢您的支持！您享有所有会员特权。</p>
-            <p class="vip-expiry">会员有效期：{{ vipExpiryText }}</p>
+            <h4>{{ $t('profile.alreadyVip') }}</h4>
+            <p>{{ $t('profile.thankYouForSupport') }}</p>
+            <p class="vip-expiry">{{ $t('profile.vipExpiry') }}：{{ vipExpiryText }}</p>
           </div>
         </div>
         
         <div class="settings-section">
-          <h3>存储设置</h3>
+          <h3>{{ $t('profile.storage') }}</h3>
           <div class="storage-item">
-            <label>存储类型</label>
+            <label>{{ $t('profile.storageType') }}</label>
             <div class="storage-options">
               <label class="radio-option">
                 <input type="radio" v-model="storageType" value="cloud" :disabled="!isVip">
-                <span>云端存储</span>
+                <span>{{ $t('profile.cloud') }}</span>
               </label>
               <label class="radio-option">
                 <input type="radio" v-model="storageType" value="local">
-                <span>本地存储</span>
+                <span>{{ $t('profile.local') }}</span>
               </label>
             </div>
-            <button class="btn btn-secondary" @click="saveStorageType">保存</button>
+            <button class="btn btn-secondary" @click="saveStorageType">{{ $t('profile.saveStorage') }}</button>
           </div>
           <div class="storage-note" v-if="!isVip">
-            <p>注意：云端存储仅对会员用户开放</p>
+            <p>{{ $t('profile.cloudStorageNote') }}</p>
           </div>
         </div>
         
         <div class="settings-section">
-          <h3>账户安全</h3>
+          <h3>{{ $t('profile.accountSecurity') }}</h3>
           <div class="security-item">
-            <label>两步验证</label>
-            <span class="status">未开启</span>
-            <button class="btn btn-secondary">开启</button>
+            <label>{{ $t('profile.twoFactorAuth') }}</label>
+            <span class="status">{{ $t('profile.notEnabled') }}</span>
+            <button class="btn btn-secondary">{{ $t('profile.enable') }}</button>
           </div>
           <div class="security-item">
-            <label>登录设备</label>
-            <span class="status">{{ loginDevices }} 台设备</span>
-            <button class="btn btn-secondary">查看</button>
+            <label>{{ $t('profile.loginDevices') }}</label>
+            <span class="status">{{ loginDevices }} {{ $t('profile.devices') }}</span>
+            <button class="btn btn-secondary">{{ $t('profile.view') }}</button>
           </div>
         </div>
       </div>
@@ -174,19 +174,19 @@ export default {
         if (error) {
           console.error('加载用户状态失败:', error)
           this.isVip = false
-          this.userRole = '普通用户'
+          this.userRole = this.$t('profile.notVip')
         } else if (data) {
           // 检查会员是否过期
           const now = new Date()
           const expiresAt = data.vip_expires_at ? new Date(data.vip_expires_at) : null
           this.isVip = data.is_vip && expiresAt && expiresAt > now
           this.vipExpiresAt = data.vip_expires_at
-          this.userRole = this.isVip ? '会员用户' : '普通用户'
+          this.userRole = this.isVip ? this.$t('profile.vip') : this.$t('profile.notVip')
         }
       } catch (error) {
         console.error('加载用户状态失败:', error)
         this.isVip = false
-        this.userRole = '普通用户'
+        this.userRole = this.$t('profile.notVip')
       }
     },
     async upgradeToVip() {
@@ -210,11 +210,11 @@ export default {
           throw error
         }
         
-        alert('升级会员成功！')
+        alert(this.$t('profile.vipUpgradeSuccess'))
         await this.loadUserStatus()
       } catch (error) {
         console.error('升级会员失败:', error)
-        alert('升级会员失败，请重试')
+        alert(this.$t('profile.vipUpgradeFailed'))
       } finally {
         this.loading = false
       }
@@ -231,7 +231,7 @@ export default {
     },
     async changePassword() {
       if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-        alert('两次输入的密码不一致')
+        alert(this.$t('profile.passwordsNotMatch'))
         return
       }
       
@@ -239,7 +239,7 @@ export default {
       try {
         // 这里可以实现密码修改逻辑
         // 暂时只是模拟
-        alert('密码修改请求已发送，请查收邮箱验证码')
+        alert(this.$t('profile.passwordChangeEmailSent'))
         this.passwordForm = {
           currentPassword: '',
           newPassword: '',
@@ -247,7 +247,7 @@ export default {
         }
       } catch (error) {
         console.error('修改密码失败:', error)
-        alert('修改密码失败，请重试')
+        alert(this.$t('profile.passwordChangeFailed'))
       } finally {
         this.loading = false
       }
@@ -255,7 +255,7 @@ export default {
     async saveStorageType() {
       // 保存存储类型到本地存储
       localStorage.setItem('storageType', this.storageType)
-      alert('存储设置已保存')
+      alert(this.$t('profile.storageSettingsSaved'))
     }
   }
 }

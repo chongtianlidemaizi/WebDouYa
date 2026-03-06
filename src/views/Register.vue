@@ -1,26 +1,26 @@
 <template>
   <div class="register">
     <div class="register-container">
-      <h1>注册账号</h1>
+      <h1>{{ $t('register.title') }}</h1>
       <form @submit.prevent="register">
         <div class="form-group">
-          <label>邮箱</label>
-          <input type="email" v-model="form.email" required placeholder="请输入邮箱">
+          <label>{{ $t('register.email') }}</label>
+          <input type="email" v-model="form.email" required placeholder="{{ $t('register.emailPlaceholder') }}">
         </div>
         <div class="form-group">
-          <label>密码</label>
-          <input type="password" v-model="form.password" required placeholder="请输入密码" minlength="6">
+          <label>{{ $t('register.password') }}</label>
+          <input type="password" v-model="form.password" required placeholder="{{ $t('register.passwordPlaceholder') }}" minlength="6">
         </div>
         <div class="form-group">
-          <label>确认密码</label>
-          <input type="password" v-model="form.confirmPassword" required placeholder="请确认密码">
+          <label>{{ $t('register.confirmPassword') }}</label>
+          <input type="password" v-model="form.confirmPassword" required placeholder="{{ $t('register.confirmPasswordPlaceholder') }}">
         </div>
         <div class="form-group">
-          <label>用户名</label>
-          <input type="text" v-model="form.username" required placeholder="请输入用户名">
+          <label>{{ $t('register.username') }}</label>
+          <input type="text" v-model="form.username" required placeholder="{{ $t('register.usernamePlaceholder') }}">
         </div>
-        <button type="submit" class="btn" :disabled="loading">注册</button>
-        <p class="login-link">已有账号？<router-link to="/login">立即登录</router-link></p>
+        <button type="submit" class="btn" :disabled="loading">{{ $t('register.register') }}</button>
+        <p class="login-link">{{ $t('register.login') }}<router-link to="/login"> {{ $t('register.loginNow') }}</router-link></p>
       </form>
       <div v-if="error" class="error-message">{{ error }}</div>
       <div v-if="success" class="success-message">{{ success }}</div>
@@ -49,7 +49,7 @@ export default {
   methods: {
     async register() {
       if (this.form.password !== this.form.confirmPassword) {
-        this.error = '两次输入的密码不一致'
+        this.error = this.$t('register.passwordsNotMatch')
         return
       }
       
@@ -91,12 +91,12 @@ export default {
           localStorage.setItem('user', JSON.stringify(data.user))
         }
         
-        this.success = '注册成功，正在跳转...'
+        this.success = this.$t('register.successMessage')
         setTimeout(() => {
           this.$router.push('/home')
         }, 1500)
       } catch (error) {
-        this.error = '注册失败，请重试'
+        this.error = this.$t('register.error')
       } finally {
         this.loading = false
       }
