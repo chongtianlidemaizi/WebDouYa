@@ -147,32 +147,49 @@ export default {
         // 加载用户工具
         await this.loadUserTools()
       } else {
-        // 尝试从localStorage获取保存的登录信息
-        const savedLogin = localStorage.getItem('savedLogin')
-        if (savedLogin) {
+        // 尝试从localStorage获取用户信息
+        const savedUser = localStorage.getItem('user')
+        if (savedUser) {
           try {
-            const loginData = JSON.parse(savedLogin)
-            // 使用保存的登录信息自动登录
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email: loginData.email,
-              password: loginData.password
-            })
-            
-            if (!error && data.user) {
-              this.user = data.user
-              await this.ensureUserExists(data.user)
-              localStorage.setItem('user', JSON.stringify(data.user))
-              // 加载用户工具
-              await this.loadUserTools()
-            }
+            const userData = JSON.parse(savedUser)
+            this.user = userData
+            // 确保用户在数据库中存在
+            await this.ensureUserExists(userData)
+            // 加载用户工具
+            await this.loadUserTools()
           } catch (error) {
-            console.error('自动登录失败:', error)
-            // 清除无效的登录信息
-            localStorage.removeItem('savedLogin')
+            console.error('从localStorage加载用户信息失败:', error)
+            // 清除无效的用户信息
+            localStorage.removeItem('user')
           }
         } else {
-          // 清除无效的用户信息
-          localStorage.removeItem('user')
+          // 尝试从localStorage获取保存的登录信息
+          const savedLogin = localStorage.getItem('savedLogin')
+          if (savedLogin) {
+            try {
+              const loginData = JSON.parse(savedLogin)
+              // 使用保存的登录信息自动登录
+              const { data, error } = await supabase.auth.signInWithPassword({
+                email: loginData.email,
+                password: loginData.password
+              })
+              
+              if (!error && data.user) {
+                this.user = data.user
+                await this.ensureUserExists(data.user)
+                localStorage.setItem('user', JSON.stringify(data.user))
+                // 加载用户工具
+                await this.loadUserTools()
+              }
+            } catch (error) {
+              console.error('自动登录失败:', error)
+              // 清除无效的登录信息
+              localStorage.removeItem('savedLogin')
+            }
+          } else {
+            // 清除无效的用户信息
+            localStorage.removeItem('user')
+          }
         }
       }
     },
