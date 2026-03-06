@@ -144,6 +144,8 @@ export default {
         await this.ensureUserExists(user)
         // 存储用户信息到localStorage
         localStorage.setItem('user', JSON.stringify(user))
+        // 加载用户工具
+        await this.loadUserTools()
       } else {
         // 尝试从localStorage获取保存的登录信息
         const savedLogin = localStorage.getItem('savedLogin')
