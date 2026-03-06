@@ -92,17 +92,30 @@ export default {
         // 存储用户信息到localStorage
         localStorage.setItem('user', JSON.stringify(user))
       } else {
-        // 尝试从localStorage获取用户信息
-        const storedUser = localStorage.getItem('user')
-        if (storedUser) {
+        // 尝试从localStorage获取保存的登录信息
+        const savedLogin = localStorage.getItem('savedLogin')
+        if (savedLogin) {
           try {
-            // 清除无效的用户信息，因为我们无法使用存储的信息自动登录
-            localStorage.removeItem('user')
+            const loginData = JSON.parse(savedLogin)
+            // 使用保存的登录信息自动登录
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: loginData.email,
+              password: loginData.password
+            })
+            
+            if (!error && data.user) {
+              this.user = data.user
+              await this.ensureUserExists(data.user)
+              localStorage.setItem('user', JSON.stringify(data.user))
+            }
           } catch (error) {
-            console.error('清理用户信息失败:', error)
-            // 清除无效的用户信息
-            localStorage.removeItem('user')
+            console.error('自动登录失败:', error)
+            // 清除无效的登录信息
+            localStorage.removeItem('savedLogin')
           }
+        } else {
+          // 清除无效的用户信息
+          localStorage.removeItem('user')
         }
       }
     },
@@ -177,8 +190,9 @@ export default {
     },
     async logout() {
       await supabase.auth.signOut()
-      // 清除localStorage中的用户信息
+      // 清除localStorage中的用户信息和保存的登录信息
       localStorage.removeItem('user')
+      localStorage.removeItem('savedLogin')
       this.$router.push('/login')
     }
   }

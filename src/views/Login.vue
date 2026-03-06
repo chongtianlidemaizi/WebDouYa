@@ -11,6 +11,10 @@
           <label>密码</label>
           <input type="password" v-model="form.password" required placeholder="请输入密码">
         </div>
+        <div class="form-group remember">
+          <input type="checkbox" v-model="form.remember">
+          <label>记住我</label>
+        </div>
         <button type="submit" class="btn" :disabled="loading">登录</button>
         <p class="register-link">没有账号？<router-link to="/">立即注册</router-link></p>
       </form>
@@ -28,13 +32,31 @@ export default {
     return {
       form: {
         email: '',
-        password: ''
+        password: '',
+        remember: false
       },
       loading: false,
       error: ''
     }
   },
+  mounted() {
+    // 从localStorage加载保存的登录信息
+    this.loadSavedLogin()
+  },
   methods: {
+    loadSavedLogin() {
+      const savedLogin = localStorage.getItem('savedLogin')
+      if (savedLogin) {
+        try {
+          const loginData = JSON.parse(savedLogin)
+          this.form.email = loginData.email
+          this.form.password = loginData.password
+          this.form.remember = true
+        } catch (error) {
+          console.error('加载保存的登录信息失败:', error)
+        }
+      }
+    },
     async login() {
       this.loading = true
       this.error = ''
@@ -53,6 +75,17 @@ export default {
         // 登录成功，存储用户信息到localStorage
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user))
+          
+          // 如果用户选择记住我，保存登录信息
+          if (this.form.remember) {
+            localStorage.setItem('savedLogin', JSON.stringify({
+              email: this.form.email,
+              password: this.form.password
+            }))
+          } else {
+            // 否则清除保存的登录信息
+            localStorage.removeItem('savedLogin')
+          }
         }
         
         // 跳转到首页
@@ -151,6 +184,22 @@ h1 {
 
 .register-link a:hover {
   text-decoration: underline;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.remember input[type="checkbox"] {
+  width: auto;
+}
+
+.remember label {
+  margin: 0;
+  cursor: pointer;
 }
 
 .error-message {
