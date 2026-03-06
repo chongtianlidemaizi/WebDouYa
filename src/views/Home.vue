@@ -172,8 +172,31 @@ export default {
             } else if (error.code === '23503') {
               // 外键约束错误，用户可能不在users表中
               await this.ensureUserExists()
-              // 重新尝试添加
-              await this.addTool(tool)
+              // 重新尝试添加，但避免递归调用
+              try {
+                const { data: retryData, error: retryError } = await supabase
+                  .from('tools')
+                  .insert({
+                    user_id: this.user.id,
+                    name: tool.name,
+                    route: tool.route,
+                    icon: tool.icon
+                  })
+                  .select()
+                
+                if (retryError) {
+                  throw retryError
+                } else if (retryData && retryData[0]) {
+                  console.log('添加工具成功:', retryData[0])
+                  this.userTools.push(retryData[0])
+                  // 通知父组件更新工具列表
+                  this.$emit('tools-updated', this.userTools)
+                  alert('工具添加成功！')
+                }
+              } catch (retryError) {
+                console.error('重试添加工具失败:', retryError)
+                alert(`添加工具失败: ${retryError.message}`)
+              }
               return
             } else if (error.code === '23505') {
               alert('工具已存在')

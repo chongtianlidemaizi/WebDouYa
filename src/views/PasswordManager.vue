@@ -291,7 +291,13 @@ export default {
       
       this.loading = true
       try {
+        console.log('开始保存密码:', this.editingPassword ? '编辑' : '添加')
+        console.log('当前用户:', this.user)
+        
         const tags = this.form.tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag)
+        
+        // 先确保用户在数据库中存在
+        await this.ensureUserExists()
         
         if (this.editingPassword) {
           // 编辑现有密码
@@ -308,6 +314,7 @@ export default {
             .eq('id', this.editingPassword.id)
           
           if (error) {
+            console.error('编辑密码失败:', error)
             throw error
           }
           
@@ -323,6 +330,9 @@ export default {
               note: this.form.note
             }
           }
+          
+          console.log('编辑密码成功')
+          alert('密码更新成功！')
         } else {
           // 添加新密码
           const { data, error } = await supabase
@@ -340,12 +350,18 @@ export default {
             .select()
           
           if (error) {
+            console.error('添加密码失败:', error)
             throw error
           }
           
           if (data && data[0]) {
+            console.log('添加密码成功:', data[0])
             this.passwords.unshift(data[0])
             this.passwordCount++
+            alert('密码添加成功！')
+          } else {
+            console.error('添加密码失败: 没有返回数据')
+            throw new Error('添加密码失败: 没有返回数据')
           }
         }
         
@@ -353,8 +369,56 @@ export default {
         this.resetForm()
       } catch (error) {
         console.error('保存密码失败:', error)
+        console.error('错误代码:', error.code)
+        console.error('错误消息:', error.message)
+        
+        if (error.code === '42P01') {
+          alert('数据库表不存在，请在Supabase控制台创建密码表\n\nCREATE TABLE passwords (\n  id SERIAL PRIMARY KEY,\n  user_id UUID NOT NULL,\n  title TEXT NOT NULL,\n  username TEXT,\n  password TEXT NOT NULL,\n  category TEXT,\n  tags TEXT[],\n  note TEXT,\n  is_local BOOLEAN DEFAULT false,\n  created_at TIMESTAMP DEFAULT NOW(),\n  updated_at TIMESTAMP DEFAULT NOW(),\n  FOREIGN KEY (user_id) REFERENCES users(id)\n);')
+        } else if (error.code === '23503') {
+          // 外键约束错误，用户可能不在users表中
+          await this.ensureUserExists()
+          // 重新尝试保存
+          await this.savePassword()
+        } else {
+          alert(`保存密码失败: ${error.message}`)
+        }
       } finally {
         this.loading = false
+      }
+    },
+    async ensureUserExists() {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', this.user.id)
+          .single()
+        
+        if (error && error.code === 'PGRST116') { // 未找到用户
+          console.log('用户不存在，正在创建...')
+          // 创建新用户
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: this.user.id,
+              email: this.user.email,
+              username: this.user.user_metadata?.username || this.user.email.split('@')[0]
+            })
+          
+          if (insertError) {
+            console.error('创建用户失败:', insertError)
+            throw insertError
+          }
+          console.log('用户创建成功')
+        } else if (error) {
+          console.error('检查用户时出错:', error)
+          throw error
+        } else {
+          console.log('用户已存在')
+        }
+      } catch (error) {
+        console.error('确保用户存在时出错:', error)
+        throw error
       }
     },
     resetForm() {
