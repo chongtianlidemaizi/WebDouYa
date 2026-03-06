@@ -245,6 +245,7 @@ export default {
     },
     updateTools(tools) {
       this.userTools = tools
+      this.updateToolNames()
       this.saveUserTools()
     },
     async logout() {
