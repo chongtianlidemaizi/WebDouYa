@@ -131,14 +131,19 @@ export default {
           
           if (error) {
             console.error('添加工具失败:', error)
+            alert('添加工具失败，请重试')
           } else if (data && data[0]) {
             this.userTools.push(data[0])
             // 通知父组件更新工具列表
             this.$emit('tools-updated', this.userTools)
+            alert('工具添加成功！')
           }
         } catch (error) {
           console.error('添加工具失败:', error)
+          alert('添加工具失败，请重试')
         }
+      } else {
+        alert('该工具已经添加过了')
       }
     },
     async removeTool(toolId) {
