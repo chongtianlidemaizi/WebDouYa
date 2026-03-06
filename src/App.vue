@@ -180,7 +180,7 @@ export default {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('email', user.email)
+        .eq('id', user.id)
         .single()
       
       if (error && error.code === 'PGRST116') { // 未找到用户
