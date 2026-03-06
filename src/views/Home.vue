@@ -59,21 +59,25 @@ export default {
   data() {
     return {
       user: null,
-      userTools: [],
-      availableTools: [
+      userTools: []
+    }
+  },
+  computed: {
+    availableTools() {
+      return [
         {
           id: 1,
-          name: '密码管理',
+          name: this.$t('passwords.title'),
           route: '/passwords',
           icon: '🔐',
-          description: '管理和分类您的密码'
+          description: this.$t('home.desc')
         },
         {
           id: 2,
-          name: '记事管理',
+          name: this.$t('notes.title'),
           route: '/notes',
           icon: '📝',
-          description: '创建和管理个人记事'
+          description: this.$t('home.desc')
         }
       ]
     }

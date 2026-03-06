@@ -42,7 +42,7 @@
           <div class="nav-section language-section">
             <h3 class="nav-section-title">{{ $t('common.language') }}</h3>
             <div class="language-selector">
-              <select v-model="currentLanguage" @change="changeLanguage" class="language-select">
+              <select v-model="currentLanguage" class="language-select">
                 <option value="zh-CN">{{ $t('language.zhCN') }}</option>
                 <option value="zh-TW">{{ $t('language.zhTW') }}</option>
                 <option value="en">{{ $t('language.en') }}</option>
@@ -87,6 +87,15 @@ export default {
       userTools: [],
       user: null,
       currentLanguage: localStorage.getItem('language') || 'zh-CN'
+    }
+  },
+  watch: {
+    currentLanguage: {
+      handler(newLang) {
+        this.locale.value = newLang
+        localStorage.setItem('language', newLang)
+      },
+      immediate: true
     }
   },
   async mounted() {
@@ -231,10 +240,7 @@ export default {
       localStorage.removeItem('savedLogin')
       this.$router.push('/login')
     },
-    changeLanguage() {
-      this.locale.value = this.currentLanguage
-      localStorage.setItem('language', this.currentLanguage)
-    }
+
   }
 }
 </script>
