@@ -131,7 +131,13 @@ export default {
           
           if (error) {
             console.error('添加工具失败:', error)
-            alert('添加工具失败，请重试')
+            if (error.code === '42P01') {
+              alert('数据库表不存在，请在Supabase控制台创建工具表')
+            } else if (error.code === '23503') {
+              alert('用户表不存在，请在Supabase控制台创建用户表')
+            } else {
+              alert(`添加工具失败: ${error.message}`)
+            }
           } else if (data && data[0]) {
             this.userTools.push(data[0])
             // 通知父组件更新工具列表
@@ -140,7 +146,7 @@ export default {
           }
         } catch (error) {
           console.error('添加工具失败:', error)
-          alert('添加工具失败，请重试')
+          alert(`添加工具失败: ${error.message}`)
         }
       } else {
         alert('该工具已经添加过了')
