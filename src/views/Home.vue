@@ -62,6 +62,15 @@ export default {
       userTools: []
     }
   },
+  watch: {
+    // 监听语言变化，更新工具名称
+    '$i18n.locale': {
+      handler() {
+        this.updateToolNames()
+      },
+      immediate: true
+    }
+  },
   computed: {
     availableTools() {
       return [
@@ -86,6 +95,21 @@ export default {
     this.loadUser()
   },
   methods: {
+    updateToolNames() {
+      // 根据当前语言更新工具名称
+      this.userTools = this.userTools.map(tool => {
+        let translatedName = tool.name
+        if (tool.route === '/passwords') {
+          translatedName = this.$t('passwords.title')
+        } else if (tool.route === '/notes') {
+          translatedName = this.$t('notes.title')
+        }
+        return {
+          ...tool,
+          name: translatedName
+        }
+      })
+    },
     async loadUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -117,6 +141,8 @@ export default {
         } else {
           this.userTools = data || []
           console.log('成功加载工具:', this.userTools)
+          // 加载工具后更新工具名称
+          this.updateToolNames()
         }
       } catch (error) {
         console.error('加载工具失败:', error)
