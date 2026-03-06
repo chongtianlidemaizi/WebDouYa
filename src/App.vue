@@ -71,17 +71,10 @@
 <script>
 import { supabase } from './supabase'
 import { initDatabase } from './db-init'
-import { useI18n } from 'vue-i18n'
+import i18n from './i18n'
 
 export default {
   name: 'App',
-  setup() {
-    const { locale } = useI18n()
-    
-    return {
-      locale
-    }
-  },
   data() {
     return {
       userTools: [],
@@ -92,7 +85,7 @@ export default {
   watch: {
     currentLanguage: {
       handler(newLang) {
-        this.locale = newLang
+        i18n.global.locale.value = newLang
         localStorage.setItem('language', newLang)
       },
       immediate: true
