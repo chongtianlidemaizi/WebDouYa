@@ -68,19 +68,18 @@ export default {
       user: null
     }
   },
-  mounted() {
-    this.initApp()
+  async mounted() {
+    await this.initApp()
     // 监听路由变化，在用户登录后重新加载工具
-    this.$router.beforeEach((to, from, next) => {
+    this.$router.beforeEach(async (to, from, next) => {
       // 检查用户是否已登录
       const user = localStorage.getItem('user')
       if (user && !this.user) {
         // 用户已登录但App.vue中的user为null，重新加载用户信息和工具
-        this.loadUser().then(() => {
-          if (this.user) {
-            this.loadUserTools()
-          }
-        })
+        await this.loadUser()
+        if (this.user) {
+          await this.loadUserTools()
+        }
       }
       next()
     })
