@@ -96,16 +96,23 @@ export default {
       if (!this.user) return
       
       try {
+        console.log('开始加载用户工具，用户ID:', this.user.id)
         const { data, error } = await supabase
           .from('tools')
           .select('*')
           .eq('user_id', this.user.id)
         
+        console.log('加载工具结果:', { data, error })
+        
         if (error) {
           console.error('加载工具失败:', error)
+          if (error.code === '42P01') {
+            console.error('工具表不存在')
+          }
           this.userTools = []
         } else {
           this.userTools = data || []
+          console.log('成功加载工具:', this.userTools)
         }
       } catch (error) {
         console.error('加载工具失败:', error)
@@ -113,12 +120,37 @@ export default {
       }
     },
     async addTool(tool) {
-      if (!this.user) return
+      if (!this.user) {
+        alert('请先登录')
+        return
+      }
+      
+      console.log('开始添加工具:', tool)
+      console.log('当前用户:', this.user)
       
       // 检查工具是否已经添加
       const isAdded = this.userTools.some(t => t.name === tool.name)
+      console.log('工具是否已添加:', isAdded)
+      
       if (!isAdded) {
         try {
+          console.log('准备插入数据到tools表')
+          
+          // 先确保用户在数据库中存在
+          await this.ensureUserExists()
+          
+          // 先测试数据库连接
+          const { error: connectionError } = await supabase.from('tools').select('*').limit(1)
+          if (connectionError) {
+            console.error('数据库连接测试失败:', connectionError)
+            if (connectionError.code === '42P01') {
+              alert('数据库表不存在，请在Supabase控制台创建工具表\n\nCREATE TABLE tools (\n  id SERIAL PRIMARY KEY,\n  user_id UUID NOT NULL,\n  name TEXT NOT NULL,\n  route TEXT NOT NULL,\n  icon TEXT NOT NULL,\n  created_at TIMESTAMP DEFAULT NOW(),\n  FOREIGN KEY (user_id) REFERENCES users(id)\n);')
+            } else {
+              alert(`数据库连接失败: ${connectionError.message}`)
+            }
+            return
+          }
+          
           const { data, error } = await supabase
             .from('tools')
             .insert({
@@ -129,27 +161,77 @@ export default {
             })
             .select()
           
+          console.log('插入操作结果:', { data, error })
+          
           if (error) {
             console.error('添加工具失败:', error)
+            console.error('错误代码:', error.code)
+            console.error('错误消息:', error.message)
             if (error.code === '42P01') {
               alert('数据库表不存在，请在Supabase控制台创建工具表')
             } else if (error.code === '23503') {
-              alert('用户表不存在，请在Supabase控制台创建用户表')
+              // 外键约束错误，用户可能不在users表中
+              await this.ensureUserExists()
+              // 重新尝试添加
+              await this.addTool(tool)
+              return
+            } else if (error.code === '23505') {
+              alert('工具已存在')
             } else {
               alert(`添加工具失败: ${error.message}`)
             }
           } else if (data && data[0]) {
+            console.log('添加工具成功:', data[0])
             this.userTools.push(data[0])
             // 通知父组件更新工具列表
             this.$emit('tools-updated', this.userTools)
             alert('工具添加成功！')
+          } else {
+            console.error('添加工具失败: 没有返回数据')
+            alert('添加工具失败: 没有返回数据')
           }
         } catch (error) {
           console.error('添加工具失败:', error)
+          console.error('错误堆栈:', error.stack)
           alert(`添加工具失败: ${error.message}`)
         }
       } else {
         alert('该工具已经添加过了')
+      }
+    },
+    async ensureUserExists() {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', this.user.id)
+          .single()
+        
+        if (error && error.code === 'PGRST116') { // 未找到用户
+          console.log('用户不存在，正在创建...')
+          // 创建新用户
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: this.user.id,
+              email: this.user.email,
+              username: this.user.user_metadata?.username || this.user.email.split('@')[0]
+            })
+          
+          if (insertError) {
+            console.error('创建用户失败:', insertError)
+            throw insertError
+          }
+          console.log('用户创建成功')
+        } else if (error) {
+          console.error('检查用户时出错:', error)
+          throw error
+        } else {
+          console.log('用户已存在')
+        }
+      } catch (error) {
+        console.error('确保用户存在时出错:', error)
+        throw error
       }
     },
     async removeTool(toolId) {
