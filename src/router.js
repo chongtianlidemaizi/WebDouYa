@@ -11,19 +11,7 @@ const routes = [
   {
     path: '/',
     name: 'Root',
-    // 根路径会根据登录状态重定向
-    redirect: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      // 检查是否有保存的登录信息
-      const savedLogin = localStorage.getItem('savedLogin')
-      if (user || savedLogin) {
-        // 有账户，跳转到登录页
-        return '/login'
-      } else {
-        // 没有登录过，跳转到注册页
-        return '/register'
-      }
-    }
+    component: Login // 默认显示登录页面
   },
   {
     path: '/register',
@@ -68,18 +56,32 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  
-  if (requiresAuth) {
+  // 处理根路径的重定向
+  if (to.path === '/') {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      // 未登录，跳转到登录页
+    // 检查是否有保存的登录信息
+    const savedLogin = localStorage.getItem('savedLogin')
+    if (user || savedLogin) {
+      // 有账户，跳转到登录页
       next('/login')
+    } else {
+      // 没有登录过，跳转到注册页
+      next('/register')
+    }
+  } else {
+    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+    
+    if (requiresAuth) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        // 未登录，跳转到登录页
+        next('/login')
+      } else {
+        next()
+      }
     } else {
       next()
     }
-  } else {
-    next()
   }
 })
 
