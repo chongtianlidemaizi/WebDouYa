@@ -87,27 +87,44 @@ export default {
       handler(newLang) {
         i18n.global.locale.value = newLang
         localStorage.setItem('language', newLang)
+        // 语言变化时更新工具名称
+        this.updateToolNames()
       },
       immediate: true
     }
   },
-  async mounted() {
-    await this.initApp()
-    // 监听路由变化，在用户登录后重新加载工具
-    this.$router.beforeEach(async (to, from, next) => {
-      // 检查用户是否已登录
-      const user = localStorage.getItem('user')
-      if (user && !this.user) {
-        // 用户已登录但App.vue中的user为null，重新加载用户信息和工具
-        await this.loadUser()
-        if (this.user) {
-          await this.loadUserTools()
-        }
-      }
-      next()
-    })
-  },
   methods: {
+    updateToolNames() {
+      // 根据当前语言更新工具名称
+      this.userTools = this.userTools.map(tool => {
+        let translatedName = tool.name
+        if (tool.route === '/passwords') {
+          translatedName = this.$t('passwords.title')
+        } else if (tool.route === '/notes') {
+          translatedName = this.$t('notes.title')
+        }
+        return {
+          ...tool,
+          name: translatedName
+        }
+      })
+    },
+    async mounted() {
+      await this.initApp()
+      // 监听路由变化，在用户登录后重新加载工具
+      this.$router.beforeEach(async (to, from, next) => {
+        // 检查用户是否已登录
+        const user = localStorage.getItem('user')
+        if (user && !this.user) {
+          // 用户已登录但App.vue中的user为null，重新加载用户信息和工具
+          await this.loadUser()
+          if (this.user) {
+            await this.loadUserTools()
+          }
+        }
+        next()
+      })
+    },
     async initApp() {
       // 初始化数据库
       await initDatabase()
@@ -189,6 +206,8 @@ export default {
           this.userTools = []
         } else {
           this.userTools = data || []
+          // 加载工具后更新工具名称
+          this.updateToolNames()
         }
       } catch (error) {
         console.error('加载工具失败:', error)
