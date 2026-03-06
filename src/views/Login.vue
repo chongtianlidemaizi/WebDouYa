@@ -50,7 +50,12 @@ export default {
           return
         }
         
-        // 登录成功，跳转到首页
+        // 登录成功，存储用户信息到localStorage
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+        
+        // 跳转到首页
         this.$router.push('/home')
       } catch (error) {
         this.error = '登录失败，请重试'

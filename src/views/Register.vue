@@ -58,7 +58,8 @@ export default {
       this.success = ''
       
       try {
-        const { data, error } = await supabase.auth.signUp({
+        // 注册用户
+        const { error: signUpError } = await supabase.auth.signUp({
           email: this.form.email,
           password: this.form.password,
           options: {
@@ -69,14 +70,30 @@ export default {
           }
         })
         
-        if (error) {
-          this.error = error.message
+        if (signUpError) {
+          this.error = signUpError.message
           return
         }
         
-        this.success = '注册成功，请登录'
+        // 注册成功后自动登录
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: this.form.email,
+          password: this.form.password
+        })
+        
+        if (signInError) {
+          this.error = signInError.message
+          return
+        }
+        
+        // 登录成功，存储用户信息到localStorage
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+        
+        this.success = '注册成功，正在跳转...'
         setTimeout(() => {
-          this.$router.push('/login')
+          this.$router.push('/home')
         }, 1500)
       } catch (error) {
         this.error = '注册失败，请重试'

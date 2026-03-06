@@ -81,45 +81,86 @@ export default {
   },
   mounted() {
     this.loadUser()
-    this.loadUserTools()
   },
   methods: {
     async loadUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         this.user = user
+        await this.loadUserTools()
       } else {
         // 未登录，跳转到登录页
         this.$router.push('/login')
       }
     },
-    loadUserTools() {
-      // 从本地存储加载用户工具
-      const storedTools = localStorage.getItem('userTools')
-      if (storedTools) {
-        this.userTools = JSON.parse(storedTools)
-      } else {
-        // 默认工具
+    async loadUserTools() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('tools')
+          .select('*')
+          .eq('user_id', this.user.id)
+        
+        if (error) {
+          console.error('加载工具失败:', error)
+          this.userTools = []
+        } else {
+          this.userTools = data || []
+        }
+      } catch (error) {
+        console.error('加载工具失败:', error)
         this.userTools = []
-        this.saveUserTools()
       }
     },
-    saveUserTools() {
-      localStorage.setItem('userTools', JSON.stringify(this.userTools))
-      // 通知父组件更新工具列表
-      this.$emit('tools-updated', this.userTools)
-    },
-    addTool(tool) {
+    async addTool(tool) {
+      if (!this.user) return
+      
       // 检查工具是否已经添加
-      const isAdded = this.userTools.some(t => t.id === tool.id)
+      const isAdded = this.userTools.some(t => t.name === tool.name)
       if (!isAdded) {
-        this.userTools.push(tool)
-        this.saveUserTools()
+        try {
+          const { data, error } = await supabase
+            .from('tools')
+            .insert({
+              user_id: this.user.id,
+              name: tool.name,
+              route: tool.route,
+              icon: tool.icon
+            })
+            .select()
+          
+          if (error) {
+            console.error('添加工具失败:', error)
+          } else if (data && data[0]) {
+            this.userTools.push(data[0])
+            // 通知父组件更新工具列表
+            this.$emit('tools-updated', this.userTools)
+          }
+        } catch (error) {
+          console.error('添加工具失败:', error)
+        }
       }
     },
-    removeTool(toolId) {
-      this.userTools = this.userTools.filter(tool => tool.id !== toolId)
-      this.saveUserTools()
+    async removeTool(toolId) {
+      if (!this.user) return
+      
+      try {
+        const { error } = await supabase
+          .from('tools')
+          .delete()
+          .eq('id', toolId)
+        
+        if (error) {
+          console.error('删除工具失败:', error)
+        } else {
+          this.userTools = this.userTools.filter(tool => tool.id !== toolId)
+          // 通知父组件更新工具列表
+          this.$emit('tools-updated', this.userTools)
+        }
+      } catch (error) {
+        console.error('删除工具失败:', error)
+      }
     }
   }
 }

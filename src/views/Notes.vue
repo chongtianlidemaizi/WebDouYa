@@ -2,7 +2,12 @@
   <div class="notes">
     <div class="header">
       <h1>记事管理</h1>
-      <button class="btn-add" @click="showAddForm = true">添加记事</button>
+      <div class="header-right">
+        <div class="note-limit">
+          {{ noteCount }}/{{ currentNoteLimit }} 个记事
+        </div>
+        <button class="btn-add" @click="showAddForm = true" :disabled="!canAddNote">添加记事</button>
+      </div>
     </div>
     
     <div class="filter-section">
@@ -31,7 +36,7 @@
             <p>{{ note.content }}</p>
           </div>
           <div class="note-footer">
-            <span class="note-date">{{ formatDate(note.createdAt) }}</span>
+            <span class="note-date">{{ formatDate(note.created_at) }}</span>
           </div>
         </div>
       </div>
@@ -77,7 +82,12 @@ export default {
         title: '',
         content: ''
       },
-      loading: false
+      loading: false,
+      user: null,
+      isVip: false,
+      noteLimit: 6, // 普通用户限制
+      vipNoteLimit: 32, // 会员用户限制
+      noteCount: 0
     }
   },
   computed: {
@@ -87,33 +97,75 @@ export default {
           note.title.toLowerCase().includes(this.filter.search.toLowerCase()) ||
           note.content.toLowerCase().includes(this.filter.search.toLowerCase())
       })
+    },
+    currentNoteLimit() {
+      return this.isVip ? this.vipNoteLimit : this.noteLimit
+    },
+    canAddNote() {
+      return this.noteCount < this.currentNoteLimit
     }
   },
   mounted() {
+    this.loadUser()
     this.loadNotes()
   },
   methods: {
+    async loadUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        this.user = user
+        // 获取用户会员状态
+        await this.loadUserStatus()
+      } else {
+        // 未登录，跳转到登录页
+        this.$router.push('/login')
+      }
+    },
+    async loadUserStatus() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('is_vip, vip_expires_at')
+          .eq('id', this.user.id)
+          .single()
+        
+        if (error) {
+          console.error('加载用户状态失败:', error)
+          this.isVip = false
+        } else if (data) {
+          // 检查会员是否过期
+          const now = new Date()
+          const expiresAt = data.vip_expires_at ? new Date(data.vip_expires_at) : null
+          this.isVip = data.is_vip && expiresAt && expiresAt > now
+        }
+      } catch (error) {
+        console.error('加载用户状态失败:', error)
+        this.isVip = false
+      }
+    },
     async loadNotes() {
+      if (!this.user) return
+      
       this.loading = true
       try {
-        // 这里可以从数据库中获取实际的记事数据
-        // 暂时使用模拟数据
-        this.notes = [
-          {
-            id: 1,
-            title: '购物清单',
-            content: '1. 牛奶\n2. 鸡蛋\n3. 面包\n4. 蔬菜',
-            createdAt: new Date()
-          },
-          {
-            id: 2,
-            title: '工作计划',
-            content: '完成项目提案\n准备周会演示\n回复客户邮件',
-            createdAt: new Date(Date.now() - 86400000)
-          }
-        ]
+        const { data, error } = await supabase
+          .from('notes')
+          .select('*')
+          .eq('user_id', this.user.id)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          throw error
+        }
+        
+        this.notes = data || []
+        this.noteCount = this.notes.length
       } catch (error) {
         console.error('加载记事失败:', error)
+        this.notes = []
+        this.noteCount = 0
       } finally {
         this.loading = false
       }
@@ -142,8 +194,17 @@ export default {
       
       this.loading = true
       try {
-        // 这里可以从数据库中删除记事
+        const { error } = await supabase
+          .from('notes')
+          .delete()
+          .eq('id', id)
+        
+        if (error) {
+          throw error
+        }
+        
         this.notes = this.notes.filter(n => n.id !== id)
+        this.noteCount = this.notes.length
       } catch (error) {
         console.error('删除记事失败:', error)
       } finally {
@@ -151,10 +212,28 @@ export default {
       }
     },
     async saveNote() {
+      // 检查是否达到记事数量限制
+      if (!this.editingNote && !this.canAddNote) {
+        alert(`您已达到记事存储限制（${this.currentNoteLimit}个），升级为会员可存储更多记事`)
+        return
+      }
+      
       this.loading = true
       try {
         if (this.editingNote) {
           // 编辑现有记事
+          const { error } = await supabase
+            .from('notes')
+            .update({
+              title: this.form.title,
+              content: this.form.content
+            })
+            .eq('id', this.editingNote.id)
+          
+          if (error) {
+            throw error
+          }
+          
           const index = this.notes.findIndex(n => n.id === this.editingNote.id)
           if (index !== -1) {
             this.notes[index] = {
@@ -165,13 +244,24 @@ export default {
           }
         } else {
           // 添加新记事
-          const newNote = {
-            id: Date.now(),
-            title: this.form.title,
-            content: this.form.content,
-            createdAt: new Date()
+          const { data, error } = await supabase
+            .from('notes')
+            .insert({
+              user_id: this.user.id,
+              title: this.form.title,
+              content: this.form.content,
+              is_local: !this.isVip // 非会员默认存储到本地
+            })
+            .select()
+          
+          if (error) {
+            throw error
           }
-          this.notes.push(newNote)
+          
+          if (data && data[0]) {
+            this.notes.unshift(data[0])
+            this.noteCount++
+          }
         }
         
         this.showAddForm = false
@@ -214,6 +304,25 @@ export default {
 .header h1 {
   color: #2c3e50;
   margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.note-limit {
+  font-size: 14px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.btn-add:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
 }
 
 .btn-add {

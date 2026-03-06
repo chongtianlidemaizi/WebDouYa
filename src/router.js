@@ -5,6 +5,7 @@ import Home from './views/Home.vue'
 import PasswordManager from './views/PasswordManager.vue'
 import Notes from './views/Notes.vue'
 import Profile from './views/Profile.vue'
+import { supabase } from './supabase'
 
 const routes = [
   {
@@ -20,28 +21,49 @@ const routes = [
   {
     path: '/home',
     name: 'Home',
-    component: Home
+    component: Home,
+    meta: { requiresAuth: true }
   },
   {
     path: '/passwords',
     name: 'PasswordManager',
-    component: PasswordManager
+    component: PasswordManager,
+    meta: { requiresAuth: true }
   },
   {
     path: '/notes',
     name: 'Notes',
-    component: Notes
+    component: Notes,
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: Profile
+    component: Profile,
+    meta: { requiresAuth: true }
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// 路由守卫
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  
+  if (requiresAuth) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      // 未登录，跳转到登录页
+      next('/login')
+    } else {
+      next()
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

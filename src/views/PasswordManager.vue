@@ -2,7 +2,12 @@
   <div class="password-manager">
     <div class="header">
       <h1>密码管理</h1>
-      <button class="btn-add" @click="showAddForm = true">添加密码</button>
+      <div class="header-right">
+        <div class="password-limit">
+          {{ passwordCount }}/{{ currentPasswordLimit }} 个密码
+        </div>
+        <button class="btn-add" @click="showAddForm = true" :disabled="!canAddPassword">添加密码</button>
+      </div>
     </div>
     
     <div class="filter-section">
@@ -124,7 +129,12 @@ export default {
         note: ''
       },
       showPassword: false,
-      loading: false
+      loading: false,
+      user: null,
+      isVip: false,
+      passwordLimit: 6, // 普通用户限制
+      vipPasswordLimit: 32, // 会员用户限制
+      passwordCount: 0
     }
   },
   computed: {
@@ -137,18 +147,63 @@ export default {
           password.note?.toLowerCase().includes(this.filter.search.toLowerCase())
         return matchesCategory && matchesSearch
       })
+    },
+    currentPasswordLimit() {
+      return this.isVip ? this.vipPasswordLimit : this.passwordLimit
+    },
+    canAddPassword() {
+      return this.passwordCount < this.currentPasswordLimit
     }
   },
   mounted() {
+    this.loadUser()
     this.loadPasswords()
   },
   methods: {
+    async loadUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        this.user = user
+        // 获取用户会员状态
+        await this.loadUserStatus()
+      } else {
+        // 未登录，跳转到登录页
+        this.$router.push('/login')
+      }
+    },
+    async loadUserStatus() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('is_vip, vip_expires_at')
+          .eq('id', this.user.id)
+          .single()
+        
+        if (error) {
+          console.error('加载用户状态失败:', error)
+          this.isVip = false
+        } else if (data) {
+          // 检查会员是否过期
+          const now = new Date()
+          const expiresAt = data.vip_expires_at ? new Date(data.vip_expires_at) : null
+          this.isVip = data.is_vip && expiresAt && expiresAt > now
+        }
+      } catch (error) {
+        console.error('加载用户状态失败:', error)
+        this.isVip = false
+      }
+    },
     async loadPasswords() {
+      if (!this.user) return
+      
       this.loading = true
       try {
         const { data, error } = await supabase
           .from('passwords')
           .select('*')
+          .eq('user_id', this.user.id)
           .order('created_at', { ascending: false })
         
         if (error) {
@@ -156,11 +211,13 @@ export default {
         }
         
         this.passwords = data || []
+        this.passwordCount = this.passwords.length
       } catch (error) {
         console.error('加载密码失败:', error)
         // 如果数据库表不存在，创建表
         await this.createPasswordsTable()
         this.passwords = []
+        this.passwordCount = 0
       } finally {
         this.loading = false
       }
@@ -218,6 +275,7 @@ export default {
         }
         
         this.passwords = this.passwords.filter(p => p.id !== id)
+        this.passwordCount = this.passwords.length
       } catch (error) {
         console.error('删除密码失败:', error)
       } finally {
@@ -225,6 +283,12 @@ export default {
       }
     },
     async savePassword() {
+      // 检查是否达到密码数量限制
+      if (!this.editingPassword && !this.canAddPassword) {
+        alert(`您已达到密码存储限制（${this.currentPasswordLimit}个），升级为会员可存储更多密码`)
+        return
+      }
+      
       this.loading = true
       try {
         const tags = this.form.tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag)
@@ -264,12 +328,14 @@ export default {
           const { data, error } = await supabase
             .from('passwords')
             .insert({
+              user_id: this.user.id,
               title: this.form.title,
               username: this.form.username,
               password: this.form.password,
               category: this.form.category,
               tags,
-              note: this.form.note
+              note: this.form.note,
+              is_local: !this.isVip // 非会员默认存储到本地
             })
             .select()
           
@@ -279,6 +345,7 @@ export default {
           
           if (data && data[0]) {
             this.passwords.unshift(data[0])
+            this.passwordCount++
           }
         }
         
@@ -327,6 +394,25 @@ export default {
 .header h1 {
   color: #2c3e50;
   margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.password-limit {
+  font-size: 14px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.btn-add:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
 }
 
 .btn-add {

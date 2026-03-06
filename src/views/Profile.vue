@@ -56,17 +56,38 @@
             <h4>升级为会员用户</h4>
             <p>会员用户享有以下特权：</p>
             <ul>
-              <li>无限制密码存储</li>
-              <li>高级密码加密</li>
-              <li>多设备同步</li>
+              <li>密码存储上限提升至32个</li>
+              <li>记事存储上限提升至32个</li>
+              <li>云端数据同步</li>
               <li>优先技术支持</li>
             </ul>
-            <button class="btn btn-vip">立即升级</button>
+            <button class="btn btn-vip" @click="upgradeToVip" :disabled="loading">立即升级</button>
           </div>
           <div class="membership-card vip" v-else>
             <h4>您已是会员用户</h4>
             <p>感谢您的支持！您享有所有会员特权。</p>
-            <p class="vip-expiry">会员有效期：永久</p>
+            <p class="vip-expiry">会员有效期：{{ vipExpiryText }}</p>
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <h3>存储设置</h3>
+          <div class="storage-item">
+            <label>存储类型</label>
+            <div class="storage-options">
+              <label class="radio-option">
+                <input type="radio" v-model="storageType" value="cloud" :disabled="!isVip">
+                <span>云端存储</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" v-model="storageType" value="local">
+                <span>本地存储</span>
+              </label>
+            </div>
+            <button class="btn btn-secondary" @click="saveStorageType">保存</button>
+          </div>
+          <div class="storage-note" v-if="!isVip">
+            <p>注意：云端存储仅对会员用户开放</p>
           </div>
         </div>
         
@@ -97,27 +118,105 @@ export default {
     return {
       user: null,
       userRole: '普通用户',
+      isVip: false,
+      vipExpiresAt: null,
       passwordForm: {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       },
       loading: false,
-      loginDevices: 1
+      loginDevices: 1,
+      storageType: 'cloud' // cloud 或 local
+    }
+  },
+  computed: {
+    vipExpiryText() {
+      if (!this.vipExpiresAt) return '永久'
+      return new Date(this.vipExpiresAt).toLocaleDateString('zh-CN')
     }
   },
   mounted() {
     this.loadUser()
+    this.loadStorageType()
   },
   methods: {
+    loadStorageType() {
+      // 从本地存储加载存储类型
+      const storedType = localStorage.getItem('storageType')
+      if (storedType) {
+        this.storageType = storedType
+      } else {
+        // 默认存储类型：会员使用云端，非会员使用本地
+        this.storageType = this.isVip ? 'cloud' : 'local'
+      }
+    },
     async loadUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         this.user = user
-        this.userRole = user.user_metadata?.role === 'vip' ? '会员用户' : '普通用户'
+        await this.loadUserStatus()
       } else {
         // 未登录，跳转到登录页
         this.$router.push('/login')
+      }
+    },
+    async loadUserStatus() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('is_vip, vip_expires_at')
+          .eq('id', this.user.id)
+          .single()
+        
+        if (error) {
+          console.error('加载用户状态失败:', error)
+          this.isVip = false
+          this.userRole = '普通用户'
+        } else if (data) {
+          // 检查会员是否过期
+          const now = new Date()
+          const expiresAt = data.vip_expires_at ? new Date(data.vip_expires_at) : null
+          this.isVip = data.is_vip && expiresAt && expiresAt > now
+          this.vipExpiresAt = data.vip_expires_at
+          this.userRole = this.isVip ? '会员用户' : '普通用户'
+        }
+      } catch (error) {
+        console.error('加载用户状态失败:', error)
+        this.isVip = false
+        this.userRole = '普通用户'
+      }
+    },
+    async upgradeToVip() {
+      if (!this.user) return
+      
+      this.loading = true
+      try {
+        // 计算会员到期时间（例如：一年后）
+        const expiresAt = new Date()
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+        
+        const { error } = await supabase
+          .from('users')
+          .update({
+            is_vip: true,
+            vip_expires_at: expiresAt.toISOString()
+          })
+          .eq('id', this.user.id)
+        
+        if (error) {
+          throw error
+        }
+        
+        alert('升级会员成功！')
+        await this.loadUserStatus()
+      } catch (error) {
+        console.error('升级会员失败:', error)
+        alert('升级会员失败，请重试')
+      } finally {
+        this.loading = false
       }
     },
     formatDate(date) {
@@ -152,6 +251,11 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    async saveStorageType() {
+      // 保存存储类型到本地存储
+      localStorage.setItem('storageType', this.storageType)
+      alert('存储设置已保存')
     }
   }
 }
@@ -383,9 +487,66 @@ export default {
   font-size: 14px;
 }
 
+.storage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.storage-options {
+  display: flex;
+  gap: 20px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.radio-option input:disabled {
+  cursor: not-allowed;
+}
+
+.radio-option span {
+  color: #666;
+  font-size: 14px;
+}
+
+.storage-note {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.storage-note p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .profile-content {
     grid-template-columns: 1fr;
+  }
+  
+  .storage-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .storage-options {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .storage-item button {
+    width: 100%;
   }
 }
 </style>

@@ -64,38 +64,121 @@ export default {
   name: 'App',
   data() {
     return {
-      userTools: []
+      userTools: [],
+      user: null
     }
   },
   mounted() {
-    this.loadUserTools()
     this.initApp()
   },
   methods: {
     async initApp() {
       // 初始化数据库
       await initDatabase()
-    },
-
-    loadUserTools() {
-      // 从本地存储加载用户工具
-      const storedTools = localStorage.getItem('userTools')
-      if (storedTools) {
-        this.userTools = JSON.parse(storedTools)
-      } else {
-        // 默认工具
-        this.userTools = []
-        this.saveUserTools()
+      // 加载用户信息
+      await this.loadUser()
+      // 加载用户工具
+      if (this.user) {
+        await this.loadUserTools()
       }
     },
-    saveUserTools() {
-      localStorage.setItem('userTools', JSON.stringify(this.userTools))
+    async loadUser() {
+      // 先从Supabase获取用户信息
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        this.user = user
+        // 确保用户在数据库中存在
+        await this.ensureUserExists(user)
+        // 存储用户信息到localStorage
+        localStorage.setItem('user', JSON.stringify(user))
+      } else {
+        // 尝试从localStorage获取用户信息
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          try {
+            // 清除无效的用户信息，因为我们无法使用存储的信息自动登录
+            localStorage.removeItem('user')
+          } catch (error) {
+            console.error('清理用户信息失败:', error)
+            // 清除无效的用户信息
+            localStorage.removeItem('user')
+          }
+        }
+      }
+    },
+    async ensureUserExists(user) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', user.email)
+        .single()
+      
+      if (error && error.code === 'PGRST116') { // 未找到用户
+        // 创建新用户
+        await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            username: user.user_metadata?.username || user.email.split('@')[0]
+          })
+      }
+    },
+    async loadUserTools() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('tools')
+          .select('*')
+          .eq('user_id', this.user.id)
+        
+        if (error) {
+          console.error('加载工具失败:', error)
+          this.userTools = []
+        } else {
+          this.userTools = data || []
+        }
+      } catch (error) {
+        console.error('加载工具失败:', error)
+        this.userTools = []
+      }
+    },
+    async saveUserTools() {
+      if (!this.user) return
+      
+      try {
+        // 先删除用户所有工具
+        await supabase
+          .from('tools')
+          .delete()
+          .eq('user_id', this.user.id)
+        
+        // 再插入新工具
+        if (this.userTools.length > 0) {
+          const toolsToInsert = this.userTools.map(tool => ({
+            user_id: this.user.id,
+            name: tool.name,
+            route: tool.route,
+            icon: tool.icon
+          }))
+          
+          await supabase
+            .from('tools')
+            .insert(toolsToInsert)
+        }
+      } catch (error) {
+        console.error('保存工具失败:', error)
+      }
     },
     updateTools(tools) {
       this.userTools = tools
+      this.saveUserTools()
     },
     async logout() {
       await supabase.auth.signOut()
+      // 清除localStorage中的用户信息
+      localStorage.removeItem('user')
       this.$router.push('/login')
     }
   }
