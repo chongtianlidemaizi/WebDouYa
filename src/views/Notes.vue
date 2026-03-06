@@ -249,8 +249,7 @@ export default {
             .insert({
               user_id: this.user.id,
               title: this.form.title,
-              content: this.form.content,
-              is_local: !this.isVip // 非会员默认存储到本地
+              content: this.form.content
             })
             .select()
           
