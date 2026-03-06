@@ -16,12 +16,11 @@
             v-for="tool in availableTools" 
             :key="tool.id"
             class="tool-card available"
-            @click="addTool(tool)"
           >
             <div class="tool-icon">{{ tool.icon }}</div>
             <h3>{{ tool.name }}</h3>
             <p>{{ tool.description }}</p>
-            <button class="btn-add">添加</button>
+            <button class="btn-add" @click="addTool(tool)">添加</button>
           </div>
         </div>
       </div>

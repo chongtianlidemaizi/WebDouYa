@@ -10,6 +10,23 @@ import { supabase } from './supabase'
 const routes = [
   {
     path: '/',
+    name: 'Root',
+    // 根路径会根据登录状态重定向
+    redirect: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      // 检查是否有保存的登录信息
+      const savedLogin = localStorage.getItem('savedLogin')
+      if (user || savedLogin) {
+        // 有账户，跳转到登录页
+        return '/login'
+      } else {
+        // 没有登录过，跳转到注册页
+        return '/register'
+      }
+    }
+  },
+  {
+    path: '/register',
     name: 'Register',
     component: Register
   },
