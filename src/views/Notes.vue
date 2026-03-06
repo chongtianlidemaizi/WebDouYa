@@ -106,10 +106,13 @@ export default {
     }
   },
   mounted() {
-    this.loadUser()
-    this.loadNotes()
+    this.init()
   },
   methods: {
+    async init() {
+      await this.loadUser()
+      await this.loadNotes()
+    },
     async loadUser() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
