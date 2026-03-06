@@ -70,6 +70,20 @@ export default {
   },
   mounted() {
     this.initApp()
+    // 监听路由变化，在用户登录后重新加载工具
+    this.$router.beforeEach((to, from, next) => {
+      // 检查用户是否已登录
+      const user = localStorage.getItem('user')
+      if (user && !this.user) {
+        // 用户已登录但App.vue中的user为null，重新加载用户信息和工具
+        this.loadUser().then(() => {
+          if (this.user) {
+            this.loadUserTools()
+          }
+        })
+      }
+      next()
+    })
   },
   methods: {
     async initApp() {
@@ -107,6 +121,8 @@ export default {
               this.user = data.user
               await this.ensureUserExists(data.user)
               localStorage.setItem('user', JSON.stringify(data.user))
+              // 加载用户工具
+              await this.loadUserTools()
             }
           } catch (error) {
             console.error('自动登录失败:', error)
