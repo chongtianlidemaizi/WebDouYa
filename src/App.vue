@@ -96,18 +96,13 @@ export default {
   methods: {
     updateToolNames() {
       // 根据当前语言更新工具名称
-      this.userTools = this.userTools.map(tool => {
-        let translatedName = tool.name
-        if (tool.route === '/passwords') {
-          translatedName = this.$t('passwords.title')
-        } else if (tool.route === '/notes') {
-          translatedName = this.$t('notes.title')
+      for (let i = 0; i < this.userTools.length; i++) {
+        if (this.userTools[i].route === '/passwords') {
+          this.userTools[i].name = this.$t('passwords.title')
+        } else if (this.userTools[i].route === '/notes') {
+          this.userTools[i].name = this.$t('notes.title')
         }
-        return {
-          ...tool,
-          name: translatedName
-        }
-      })
+      }
     },
     async mounted() {
       await this.initApp()
