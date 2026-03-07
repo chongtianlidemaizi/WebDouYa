@@ -259,7 +259,7 @@ export default {
     updateTools(tools) {
       this.userTools = tools
       this.updateToolNames()
-      this.saveUserTools()
+      // 不需要调用saveUserTools()，因为Home.vue已经直接保存到数据库了
     },
     async logout() {
       await supabase.auth.signOut()
