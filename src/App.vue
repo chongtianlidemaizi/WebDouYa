@@ -127,7 +127,7 @@ export default {
       // 加载用户信息
       await this.loadUser()
       // 加载用户工具
-      if (this.user) {
+      if (this.user && this.userTools.length === 0) {
         await this.loadUserTools()
       }
     },
@@ -140,8 +140,10 @@ export default {
         await this.ensureUserExists(user)
         // 存储用户信息到localStorage
         localStorage.setItem('user', JSON.stringify(user))
-        // 加载用户工具
-        await this.loadUserTools()
+        // 只有当用户工具为空时才加载，避免覆盖已更新的工具列表
+        if (this.userTools.length === 0) {
+          await this.loadUserTools()
+        }
       } else {
         // 尝试从localStorage获取用户信息
         const savedUser = localStorage.getItem('user')
@@ -151,8 +153,10 @@ export default {
             this.user = userData
             // 确保用户在数据库中存在
             await this.ensureUserExists(userData)
-            // 加载用户工具
-            await this.loadUserTools()
+            // 只有当用户工具为空时才加载，避免覆盖已更新的工具列表
+            if (this.userTools.length === 0) {
+              await this.loadUserTools()
+            }
           } catch (error) {
             console.error('从localStorage加载用户信息失败:', error)
             // 清除无效的用户信息
@@ -174,8 +178,10 @@ export default {
                 this.user = data.user
                 await this.ensureUserExists(data.user)
                 localStorage.setItem('user', JSON.stringify(data.user))
-                // 加载用户工具
-                await this.loadUserTools()
+                // 只有当用户工具为空时才加载，避免覆盖已更新的工具列表
+                if (this.userTools.length === 0) {
+                  await this.loadUserTools()
+                }
               }
             } catch (error) {
               console.error('自动登录失败:', error)
