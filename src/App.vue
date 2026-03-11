@@ -96,18 +96,15 @@ export default {
   methods: {
     updateToolNames() {
       // 根据当前语言更新工具名称
-      this.userTools = this.userTools.map(tool => {
-        let translatedName = tool.name
-        if (tool.route === '/passwords') {
-          translatedName = this.$t('passwords.title')
-        } else if (tool.route === '/notes') {
-          translatedName = this.$t('notes.title')
+      for (let i = 0; i < this.userTools.length; i++) {
+        if (this.userTools[i].route === '/passwords') {
+          this.userTools[i].name = this.$t('passwords.title')
+        } else if (this.userTools[i].route === '/notes') {
+          this.userTools[i].name = this.$t('notes.title')
         }
-        return {
-          ...tool,
-          name: translatedName
-        }
-      })
+      }
+      // 强制Vue更新视图
+      this.$forceUpdate()
     },
     async mounted() {
       // 暴露App实例到window对象，供其他组件调用
@@ -226,6 +223,8 @@ export default {
           this.userTools = data || []
           // 加载工具后更新工具名称
           this.updateToolNames()
+          // 强制Vue更新视图
+          this.$forceUpdate()
         }
       } catch (error) {
         console.error('加载工具失败:', error)
@@ -262,6 +261,8 @@ export default {
     updateTools(tools) {
       this.userTools = tools
       this.updateToolNames()
+      // 强制Vue更新视图
+      this.$forceUpdate()
       // 不需要调用saveUserTools()，因为Home.vue已经直接保存到数据库了
     },
     async logout() {
