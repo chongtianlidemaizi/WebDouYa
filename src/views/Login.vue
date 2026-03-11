@@ -96,6 +96,10 @@ export default {
         
         // 跳转到首页
         this.$router.push('/home')
+        // 触发全局事件，通知App组件加载工具
+        if (window.appInstance) {
+          window.appInstance.loadUserTools()
+        }
       } catch (error) {
         this.error = '登录失败，请重试'
       } finally {

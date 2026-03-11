@@ -110,15 +110,17 @@ export default {
       })
     },
     async mounted() {
+      // 暴露App实例到window对象，供其他组件调用
+      window.appInstance = this
       await this.initApp()
       // 监听路由变化，在用户登录后重新加载工具
       this.$router.beforeEach(async (to, from, next) => {
         // 检查用户是否已登录
         const user = localStorage.getItem('user')
-        if (user) {
-          // 用户已登录，确保用户信息已加载
+        if (user && to.path === '/home') {
+          // 用户已登录且跳转到首页，加载工具
           await this.loadUser()
-          // 不需要在这里加载工具，避免覆盖已更新的工具列表
+          await this.loadUserTools()
         }
         next()
       })
