@@ -42,6 +42,12 @@ export default {
   mounted() {
     // 从localStorage加载保存的登录信息
     this.loadSavedLogin()
+    // 自动填充测试账户和密码
+    if (!this.form.email) {
+      this.form.email = '2075289757@qq.com'
+      this.form.password = '694071728Yll'
+      this.form.remember = true
+    }
   },
   methods: {
     loadSavedLogin() {
